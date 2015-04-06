@@ -1,11 +1,14 @@
 package com.roni.haim.nearme;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -19,17 +22,28 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+
 
 public class MainActivity extends ActionBarActivity implements
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
-    private TextView responseTextView;
-    private TextView mLatitudeText;
-    private TextView mLongitudeText;
     private String user;
-    private GoogleMap map;
-    private GoogleApiClient mGoogleApiClient;
-    private Location mLastLocation;
+    private TextView userFullName;
+    private ImageView userPic;
+
+    //private TextView mLatitudeText;
+    //private TextView mLongitudeText;
+
+    //private GoogleMap map;
+    //private GoogleApiClient mGoogleApiClient;
+    //private Location mLastLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,23 +51,44 @@ public class MainActivity extends ActionBarActivity implements
         setContentView(R.layout.activity_main);
 
         this.user = "haimomesi@gmail.com";
-        this.responseTextView = (TextView) this.findViewById(R.id.responseTextView);
+        this.userFullName = (TextView) this.findViewById(R.id.userFullName);
+        this.userPic = (ImageView)findViewById(R.id.userPic);
         //this.mLatitudeText = (TextView) this.findViewById(R.id.mLatitudeText);
         //this.mLongitudeText = (TextView) this.findViewById(R.id.mLongitudeText);
         //this.map = ((MapFragment)getFragmentManager().findFragmentById(R.id.map)).getMap();
         //this.map.setMyLocationEnabled(true);
         //buildGoogleApiClient();
        //new ShowOnMapTask().execute(new ApiConnector(this.user));
-        new GetInterestsTask().execute(new ApiConnector(this.user));
+        DBHandler dbh = new DBHandler(this.user,"get_user_details",null,"SetUserDetails",this);
+        dbh.execute(new ApiConnector());
         //new GetFeedTask().execute(new ApiConnector(this.user));
     }
 
+    /*
     protected synchronized void buildGoogleApiClient() {
         this.mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();
+    }
+    */
+
+    public void SetUserDetails(JSONArray jsonArray)
+    {
+        for(int i=0; i<jsonArray.length();i++){
+            JSONObject json = null;
+            try {
+                json = jsonArray.getJSONObject(i);
+                new IMGHandler(this.userPic,"http://nearme.host22.com/images/users/"+this.user+".jpg").execute(70);
+                this.userFullName.setText(json.getString("name"));
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            } catch (IllegalArgumentException e) {
+                    e.printStackTrace();
+            }
+        }
     }
 
     public void setTextToTextView(JSONArray jsonArray)
@@ -74,9 +109,10 @@ public class MainActivity extends ActionBarActivity implements
             }
         }
 
-        this.responseTextView.setText(s);
+        this.userFullName.setText(s);
     }
 
+    /*
     public void setOnMap(JSONArray jsonArray) {
         String s  = "";
         for(int i=0; i<jsonArray.length();i++) {
@@ -87,14 +123,15 @@ public class MainActivity extends ActionBarActivity implements
                 s = s +
                         "Lat : "+json.getDouble("lat")+"\n"+
                         "Lng : "+json.getDouble("lng")+"\n\n";
-                this.map.addMarker(new MarkerOptions()
+                //this.map.addMarker(new MarkerOptions()
                         .position(new LatLng(json.getDouble("lat"), json.getDouble("lng"))));
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
-        this.responseTextView.setText(s);
+        this.userFullName.setText(s);
     }
+    */
 
     public void showInterests(JSONArray jsonArray) {
         String s  = "Interests :\n";
@@ -108,7 +145,7 @@ public class MainActivity extends ActionBarActivity implements
                 e.printStackTrace();
             }
         }
-        this.responseTextView.setText(s);
+        this.userFullName.setText(s);
     }
 
     @Override
@@ -133,47 +170,6 @@ public class MainActivity extends ActionBarActivity implements
 
     }
 
-    private class ShowOnMapTask extends AsyncTask<ApiConnector,Long,JSONArray>
-    {
-        @Override
-        protected JSONArray doInBackground(ApiConnector... params) {
-            return params[0].ShowOnMap();
-        }
-
-        @Override
-        protected void onPostExecute(JSONArray jsonArray) {
-            setOnMap(jsonArray);
-        }
-    }
-
-    private class GetFeedTask extends AsyncTask<ApiConnector,Long,JSONArray>
-    {
-        @Override
-        protected JSONArray doInBackground(ApiConnector... params) {
-
-            // it is executed on Background thread
-            return params[0].GetFeed();
-        }
-
-        @Override
-        protected void onPostExecute(JSONArray jsonArray) {
-            setTextToTextView(jsonArray);
-        }
-    }
-
-    private class GetInterestsTask extends AsyncTask<ApiConnector,Long,JSONArray>
-    {
-        @Override
-        protected JSONArray doInBackground(ApiConnector... params) {
-            return params[0].GetInterests();
-        }
-
-        @Override
-        protected void onPostExecute(JSONArray jsonArray) {
-            showInterests(jsonArray);
-        }
-    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -195,4 +191,5 @@ public class MainActivity extends ActionBarActivity implements
 
         return super.onOptionsItemSelected(item);
     }
+
 }

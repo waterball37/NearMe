@@ -5,7 +5,39 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     android:paddingBottom="@dimen/activity_vertical_margin" tools:context=".MainActivity">
 
-    <TextView android:text="@string/hello_world" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="response"
+        android:id="@+id/responseTextView"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginLeft="60dp"
+        android:textAlignment="center"/>
+
+    <!--
+  <TextView
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="Latitude"
+      android:layout_below="@id/responseTextView"
+      android:id="@+id/mLatitudeText" />
+
+  <TextView
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="Longitude"
+      android:layout_below="@id/mLatitudeText"
+      android:id="@+id/mLongitudeText" />
+
+
+  <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+      android:id="@+id/map"
+      android:layout_below="@id/mLongitudeText"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:name="com.google.android.gms.maps.MapFragment"/>
+      -->
 
 </RelativeLayout>

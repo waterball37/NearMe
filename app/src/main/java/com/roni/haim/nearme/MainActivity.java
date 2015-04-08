@@ -92,7 +92,7 @@ public class MainActivity extends ActionBarActivity implements
                     System.out.println("success");
                 }
                 else
-                    System.out.println("failure");
+                    System.out.println("error");
             } catch (JSONException e) {
                 e.printStackTrace();
             }

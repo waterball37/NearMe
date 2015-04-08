@@ -29,6 +29,9 @@ import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Hashtable;
 
 
 public class MainActivity extends ActionBarActivity implements
@@ -49,8 +52,7 @@ public class MainActivity extends ActionBarActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        this.user = "haimomesi@gmail.com";
+        this.user = "haimomesi@hotmail.com";
         this.userFullName = (TextView) this.findViewById(R.id.userFullName);
         this.userPic = (ImageView)findViewById(R.id.userPic);
         //this.mLatitudeText = (TextView) this.findViewById(R.id.mLatitudeText);
@@ -59,9 +61,42 @@ public class MainActivity extends ActionBarActivity implements
         //this.map.setMyLocationEnabled(true);
         //buildGoogleApiClient();
        //new ShowOnMapTask().execute(new ApiConnector(this.user));
-        DBHandler dbh = new DBHandler(this.user,"get_user_details",null,"SetUserDetails",this);
-        dbh.execute(new ApiConnector());
+
+        Hashtable<String,String> params = new Hashtable<String,String>();
+        params.put("name","Haim Omesi");
+        params.put("pass",BCrypt.hashpw("Waterball37", BCrypt.gensalt()));
+        new DBHandler(this.user,"set_user",params,"setUser",this).execute();
+
+        /*
+        String passFromDB = "@YREHGFKU^$&%$EG";
+        String passFromUser = BCrypt.hashpw(passFromForm, BCrypt.gensalt());
+        if (BCrypt.checkpw(PassFromUser, hashed))
+            System.out.println("It matches");
+        else
+            System.out.println("It does not match");
+        */
+
+        //new DBHandler(this.user,"get_user_details",null,"SetUserDetails",this).execute();
+
         //new GetFeedTask().execute(new ApiConnector(this.user));
+    }
+
+    public void setUser(JSONArray jsonArray) {
+        for(int i=0; i<jsonArray.length();i++){
+            JSONObject json = null;
+            try {
+                json = jsonArray.getJSONObject(i);
+                String result = json.getString("result");
+                if( result.equals("success") )
+                {
+                    System.out.println("success");
+                }
+                else
+                    System.out.println("failure");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /*

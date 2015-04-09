@@ -31,6 +31,11 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Hashtable;
 
 
@@ -40,7 +45,6 @@ public class MainActivity extends ActionBarActivity implements
     private String user;
     private TextView userFullName;
     private ImageView userPic;
-
     //private TextView mLatitudeText;
     //private TextView mLongitudeText;
 
@@ -60,14 +64,27 @@ public class MainActivity extends ActionBarActivity implements
         //this.map = ((MapFragment)getFragmentManager().findFragmentById(R.id.map)).getMap();
         //this.map.setMyLocationEnabled(true);
         //buildGoogleApiClient();
-       //new ShowOnMapTask().execute(new ApiConnector(this.user));
 
+
+        /*
+        SET USER STUB
         Hashtable<String,String> params = new Hashtable<String,String>();
         params.put("name","Haim Omesi");
         params.put("pass",BCrypt.hashpw("Waterball37", BCrypt.gensalt()));
         new DBHandler(this.user,"set_user",params,"setUser",this).execute();
+        */
 
         /*
+        SET USER SETTINGS STUB
+        Hashtable<String,String> params = new Hashtable<String,String>();
+        params.put("radius","37");
+        params.put("interests","Food,Music,Art");
+        new DBHandler(this.user,"set_user_settings",params,"setUserSettings",this).execute();
+         */
+
+
+        /*
+        MATCH PASSWORD STUB
         String passFromDB = "@YREHGFKU^$&%$EG";
         String passFromUser = BCrypt.hashpw(passFromForm, BCrypt.gensalt());
         if (BCrypt.checkpw(PassFromUser, hashed))
@@ -76,9 +93,130 @@ public class MainActivity extends ActionBarActivity implements
             System.out.println("It does not match");
         */
 
-        //new DBHandler(this.user,"get_user_details",null,"SetUserDetails",this).execute();
+        /*
+        GET USER SETTINGS STUB
+        new DBHandler(this.user,"get_user_settings",null,"getUserSettings",this).execute();
+        */
 
-        //new GetFeedTask().execute(new ApiConnector(this.user));
+        /*
+        GET USER FEED STUB
+        new DBHandler(this.user,"get_user_feed",null,"getUserFeed",this).execute();
+         */
+
+        /*
+        GET EVENT BY ID STUB
+        Hashtable<String,String> params = new Hashtable<String,String>();
+        params.put("ID","10");
+        new DBHandler(this.user,"get_event",params,"getEvent",this).execute();
+        */
+
+        /*
+        CREATE EVENT STUB
+        Hashtable<String,String> params = new Hashtable<String,String>();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
+        Date date = new Date();
+        params.put("date", dateFormat.format(date));
+        params.put("name", "Jimmy Hendrix Tribute");
+        params.put("interests", "Music");
+        params.put("address", "7 Ha-Biluyim, Gedera, Israel");
+        params.put("lat", "31.815186");
+        params.put("lng", "34.772329");
+        params.put("type","bar");
+        new DBHandler(this.user,"set_event",params,"setEvent",this).execute();
+        //TODO ADD IMAGE
+        */
+
+    }
+
+    public void setEvent(JSONArray jsonArray)
+    {
+        for(int i=0; i<jsonArray.length();i++){
+            JSONObject json = null;
+            try {
+                json = jsonArray.getJSONObject(i);
+                String result = json.getString("result");
+                if( result.equals("success") )
+                {
+                    System.out.println("success");
+                }
+                else
+                    System.out.println("error");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void getEvent(JSONArray jsonArray)
+    {
+        for(int i=0; i<jsonArray.length();i++){
+            JSONObject json = null;
+            try {
+                json = jsonArray.getJSONObject(i);
+                System.out.println(json.toString());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void getUserFeed(JSONArray jsonArray)
+    {
+        for(int i=0; i<jsonArray.length();i++){
+            JSONObject json = null;
+            try {
+                json = jsonArray.getJSONObject(i);
+                //this.map.addMarker(new MarkerOptions()
+                //.position(new LatLng(json.getDouble("lat"), json.getDouble("lng"))));
+                System.out.println(
+                    "ID: " + json.getString("ID") +
+                    "Date: " + json.getString("date") +
+                    " name: " + json.getString("name") +
+                    " Interests: " + json.getString("interests") +
+                    " Address: " + json.getString("address") +
+                    " Lat : "+json.getDouble("lat") +
+                    " Lng : "+json.getDouble("lng") +
+                    " Address: " + json.getString("type"));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void getUserSettings(JSONArray jsonArray)
+    {
+        for(int i=0; i<jsonArray.length();i++){
+            JSONObject json = null;
+            try {
+                json = jsonArray.getJSONObject(i);
+                System.out.println("ID: " + json.getString("ID") + " Radius: " + json.getInt("radius") + " Interests: ");
+                String[] interests = json.getString("interests").split(",");
+                for (int idx=0; idx<interests.length; idx++) {
+                    System.out.println(interests[idx]);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void setUserSettings(JSONArray jsonArray)
+    {
+        for(int i=0; i<jsonArray.length();i++){
+            JSONObject json = null;
+            try {
+                json = jsonArray.getJSONObject(i);
+                String result = json.getString("result");
+                if( result.equals("success") )
+                {
+                    System.out.println("success");
+                }
+                else
+                    System.out.println("error");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void setUser(JSONArray jsonArray) {

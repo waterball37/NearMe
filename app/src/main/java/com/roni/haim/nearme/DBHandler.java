@@ -22,6 +22,7 @@ import java.util.Hashtable;
 /**
  * Created by Haim Omesi & Roni Gonikman on 4/6/15.
  */
+@SuppressWarnings("deprecation")
 public class DBHandler extends AsyncTask<Integer,Long,JSONArray>
 {
     private String user;

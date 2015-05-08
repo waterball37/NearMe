@@ -3,7 +3,7 @@ package com.roni.haim.nearme;
 import java.io.UnsupportedEncodingException;
 import java.security.SecureRandom;
 
-public class BCrypt {
+class BCrypt {
 	// BCrypt parameters
 	private static final int GENSALT_DEFAULT_LOG2_ROUNDS = 10;
 	private static final int BCRYPT_SALT_LEN = 16;
@@ -549,8 +549,8 @@ public class BCrypt {
 	 * @param cdata         the plaintext to encrypt
 	 * @return	an array containing the binary hashed password
 	 */
-	public byte[] crypt_raw(byte password[], byte salt[], int log_rounds,
-	    int cdata[]) {
+    byte[] crypt_raw(byte password[], byte salt[], int log_rounds,
+                     int cdata[]) {
 		int rounds, i, j;
 		int clen = cdata.length;
 		byte ret[];
@@ -590,7 +590,7 @@ public class BCrypt {
 	 * using BCrypt.gensalt)
 	 * @return	the hashed password
 	 */
-	public static String hashpw(String password, String salt) {
+	private static String hashpw(String password, String salt) {
 		BCrypt B;
 		String real_salt;
 		byte passwordb[], saltb[], hashed[];
@@ -653,7 +653,7 @@ public class BCrypt {
 	 * @param random		an instance of SecureRandom to use
 	 * @return	an encoded salt value
 	 */
-	public static String gensalt(int log_rounds, SecureRandom random) {
+	private static String gensalt(int log_rounds, SecureRandom random) {
 		StringBuffer rs = new StringBuffer();
 		byte rnd[] = new byte[BCRYPT_SALT_LEN];
 
@@ -679,7 +679,7 @@ public class BCrypt {
 	 * 2**log_rounds.
 	 * @return	an encoded salt value
 	 */
-	public static String gensalt(int log_rounds) {
+	private static String gensalt(int log_rounds) {
 		return gensalt(log_rounds, new SecureRandom());
 	}
 

@@ -2,10 +2,12 @@ package com.roni.haim.nearme;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Base64;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageView;
@@ -22,6 +24,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
@@ -59,6 +62,7 @@ public class MainActivity extends ActionBarActivity implements
         this.user = "haimomesi@hotmail.com";
         this.userFullName = (TextView) this.findViewById(R.id.userFullName);
         this.userPic = (ImageView)findViewById(R.id.userPic);
+        userPic.setImageResource(R.drawable.logo);
         //this.mLatitudeText = (TextView) this.findViewById(R.id.mLatitudeText);
         //this.mLongitudeText = (TextView) this.findViewById(R.id.mLongitudeText);
         //this.map = ((MapFragment)getFragmentManager().findFragmentById(R.id.map)).getMap();
@@ -125,7 +129,31 @@ public class MainActivity extends ActionBarActivity implements
         new DBHandler(this.user,"set_event",params,"setEvent",this).execute();
         //TODO ADD IMAGE
         */
+        Bitmap bitmap = ((BitmapDrawable)userPic.getDrawable()).getBitmap();
+        ByteArrayOutputStream stream=new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+        //byte[] imageInByte=stream.toByteArray();
+        Hashtable<String,String> params = new Hashtable<String,String>();
+        params.put("image",Base64.encodeToString(stream.toByteArray(), Base64.DEFAULT));
+        new DBHandler(user,"set_image",params,"setUser",this).execute();
 
+    }
+
+    public void getUser(JSONArray jsonArray)
+    {
+        if(jsonArray==null)
+        {
+            System.out.println("it was null");
+            return;
+        }
+        for(int i=0; i<jsonArray.length();i++){
+            JSONObject json = null;
+            try {
+                json = jsonArray.getJSONObject(i);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void setEvent(JSONArray jsonArray)
@@ -253,7 +281,7 @@ public class MainActivity extends ActionBarActivity implements
             JSONObject json = null;
             try {
                 json = jsonArray.getJSONObject(i);
-                new IMGHandler(this.userPic,"http://nearme.host22.com/images/users/"+this.user+".jpg").execute(70);
+                new IMGHandler(this.userPic,"http://nearme.host22.com/images/users/"+this.user+".jpg",this).execute(70);
                 this.userFullName.setText(json.getString("name"));
 
             } catch (JSONException e) {

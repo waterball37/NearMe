@@ -2,6 +2,8 @@ package com.roni.haim.nearme;
 
 import android.os.AsyncTask;
 import android.util.Log;
+import android.view.View;
+import android.widget.LinearLayout;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -14,6 +16,7 @@ import org.json.JSONException;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URLEncoder;
@@ -23,13 +26,13 @@ import java.util.Hashtable;
  * Created by Haim Omesi & Roni Gonikman on 4/6/15.
  */
 @SuppressWarnings("deprecation")
-public class DBHandler extends AsyncTask<Integer,Long,JSONArray>
+class DBHandler extends AsyncTask<Integer,Long,JSONArray>
 {
-    private String user;
-    private String action;
-    private Hashtable<String,String> params;
-    private String callback;
-    private Object senderClass;
+    private final String user;
+    private final String action;
+    private final Hashtable<String,String> params;
+    private final String callback;
+    private final Object senderClass;
 
     public DBHandler(String user, String action, Hashtable<String,String> params, String callback, Object senderClass) {
         this.user = user;
@@ -39,7 +42,7 @@ public class DBHandler extends AsyncTask<Integer,Long,JSONArray>
         this.senderClass = senderClass;
     }
 
-    public JSONArray Launch(String user,String action, Hashtable<String,String> params)
+    JSONArray Launch(String user, String action, Hashtable<String, String> params)
     {
         String url = "http://nearme.host22.com/dbConnector.php?action="+action+"&user="+user;
         if(params!=null)
@@ -92,9 +95,24 @@ public class DBHandler extends AsyncTask<Integer,Long,JSONArray>
     }
 
     @Override
+    protected void onPreExecute() {
+        try {
+            Class noparams[] = {};
+            Method method = null;
+            method = this.senderClass.getClass().getDeclaredMethod ("startSpinner", noparams);
+            method.invoke (this.senderClass);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
     protected void onPostExecute(JSONArray jsonArray) {
         try {
-            Class[] pTypes = new Class[1];
             Method method = this.senderClass.getClass().getDeclaredMethod (this.callback, JSONArray.class);
             method.invoke (this.senderClass, jsonArray);
         } catch (InvocationTargetException e) {

@@ -1,0 +1,52 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/eView"
+    android:layout_width="fill_parent"
+    android:layout_height="?android:attr/listPreferredItemHeight">
+
+    <TextView
+        android:id="@+id/eInterestColor"
+        android:layout_width="15dp"
+        android:layout_height="80dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        />
+
+    <ImageView
+        android:id="@+id/eImage"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_toRightOf="@id/eInterestColor"
+        android:layout_alignParentTop="true"
+        android:layout_marginRight="6dp"
+        android:layout_alignBottom="@+id/eAddress" />
+
+    <TextView
+        android:id="@+id/eAddress"
+        android:layout_width="fill_parent"
+        android:layout_height="26dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_toRightOf="@id/eImage"
+        android:ellipsize="marquee"
+        android:singleLine="true"
+        android:textSize="16sp"/>
+
+    <TextView
+        android:id="@+id/eName"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/eAddress"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignWithParentIfMissing="true"
+        android:layout_toRightOf="@id/eImage"
+        android:gravity="center_vertical"
+        android:textSize="22sp" />
+
+    <TextView
+        android:id="@+id/eID"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:textSize="0sp" />
+
+</RelativeLayout> 

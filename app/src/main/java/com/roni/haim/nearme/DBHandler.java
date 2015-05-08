@@ -76,7 +76,9 @@ public class DBHandler extends AsyncTask<Integer,Long,JSONArray>
             try {
                 String entityResponse = EntityUtils.toString(httpEntity);
                 Log.e("Entity Response  : ", entityResponse);
-                jsonArray = new JSONArray(entityResponse);
+                jsonArray = null;
+                if (entityResponse!=null)
+                    jsonArray = new JSONArray(entityResponse);
             } catch (JSONException e) {
                 e.printStackTrace();
             } catch (IOException e) {

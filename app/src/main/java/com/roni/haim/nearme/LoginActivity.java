@@ -140,24 +140,12 @@ public class LoginActivity extends Activity {
         }
     }
 
-    public void check(String id,String pass)
+
+   public void registration(View view)
     {
-        mEmailView.setError(null);
-        mPasswordView.setError(null);
-        if (TextUtils.isEmpty(pass) || !isPasswordValid(pass))
-            mPasswordView.setError(getString(R.string.error_invalid_password));
-        if(TextUtils.isEmpty(id) || isEmailValid(id))
-            mEmailView.setError(getString(R.string.error_invalid_email));
+        //Intent intent = new Intent(this, SignUp.class);
+        //startActivity(intent);
     }
-
-    private boolean isEmailValid(String email) {
-        return email.contains("@");
-    }
-
-    private boolean isPasswordValid(String password) {
-        return password.length() > 5;
-    }
-
 
     }
 

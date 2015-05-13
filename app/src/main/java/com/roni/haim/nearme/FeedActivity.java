@@ -1,37 +1,38 @@
 package com.roni.haim.nearme;
 
+import android.app.Activity;
+import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.AnimationDrawable;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
-import android.os.AsyncTask;
-import android.os.Handler;
-import android.os.SystemClock;
+import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.renderscript.Allocation;
 import android.renderscript.Element;
 import android.renderscript.RenderScript;
 import android.renderscript.ScriptIntrinsicBlur;
-import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.widget.SwipeRefreshLayout;
+import android.text.format.DateUtils;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Interpolator;
-import android.view.animation.LinearInterpolator;
 import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
@@ -39,50 +40,39 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.Projection;
-import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.squareup.picasso.Callback;
+import com.squareup.picasso.Picasso;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.URLEncoder;
+import java.io.ByteArrayOutputStream;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
 
-public class FeedActivity extends FragmentActivity implements OnMapReadyCallback,GoogleApiClient.ConnectionCallbacks,GoogleApiClient.OnConnectionFailedListener  {
-    private final String IMG_URL = "http://nearme.host22.com/images/users/";
+public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleApiClient.ConnectionCallbacks,GoogleApiClient.OnConnectionFailedListener  {
+
     private GoogleApiClient mGoogleApiClient;
     private Location mLastLocation;
     private String user;
     private int userRadius;
     private GoogleMap mMap;
-    private TextView userFullName;
-    private ImageView userPic;
     private ListView feed;
-    private ArrayAdapter<String> listAdapter ;
     private HashMap<String,Marker> markers;
     private ArrayList<ArrayList<String>> events;
 
     private boolean blurApplied = false;
+    private boolean fragmentBlurApplied = false;
     private Bitmap blurImage;
 
     private boolean spinnerStarted = false;
@@ -95,19 +85,39 @@ public class FeedActivity extends FragmentActivity implements OnMapReadyCallback
     private RelativeLayout layout;
     private ImageView blur;
 
+    private ImageButton newEvent;
+    private Fragment NewFragment;
+    private FragmentTransaction FT;
+
+    private SwipeRefreshLayout mSwipeRefreshLayout;
+
+    static class ViewHolder {
+        TextView eInterestColor;
+        ImageView eImage;
+        TextView eName;
+        TextView eAddress;
+        TextView eTime;
+        TextView eID;
+    }
+
+    @Override
+    protected void onDestroy() {
+        mMap.clear();
+        markers.clear();
+        events.clear();
+        System.gc();
+        super.onDestroy();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_feed);
         this.user = "haimomesi@gmail.com";
 
-        //this.userFullName = (TextView)findViewById(R.id.userFullName);
-        //this.userPic = (ImageView)findViewById(R.id.userPic);
         this.feed = (ListView)findViewById(R.id.feed);
         this.markers = new HashMap<String,Marker>();
         this.events = new ArrayList<ArrayList<String>>();
-        //new IMGHandler(this.userPic, this.IMG_URL+this.user+".jpg").execute(70);
-        //new DBHandler(this.user,"get_user",null,"getUser",this).execute();
 
         loadingLayout = (LinearLayout)findViewById(R.id.spinnerContainer);
         loadingLayout.setVisibility(View.GONE);
@@ -121,38 +131,154 @@ public class FeedActivity extends FragmentActivity implements OnMapReadyCallback
         layout = (RelativeLayout)findViewById(R.id.layout);
         blur = (ImageView)findViewById(R.id.blur);
 
+        mSwipeRefreshLayout = (SwipeRefreshLayout)findViewById(R.id.refresh_layout);
+
+        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                finish();
+                startActivity(getIntent());
+            }
+        });
+
+        newEvent = (ImageButton)findViewById(R.id.add_event);
+        newEvent.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(NewFragment == null || !NewFragment.isAdded()) {
+                    setBlurBool(false);
+                    if(!fragmentBlurApplied) {
+                        applyBlur();
+                        fragmentBlurApplied = true;
+                    }
+                    blur.setClickable(true);
+                    blur.setVisibility(View.VISIBLE);
+
+                    FT = getFragmentManager().beginTransaction();
+                    //FT.setCustomAnimations(R.animator.enter_anim, R.animator.exit_anim);
+
+                    NewFragment = new NewEventFragment();
+
+                    FT.add(R.id.new_event, NewFragment);
+                    FT.addToBackStack("NewFragment");
+                    FT.commit();
+                }
+            }
+        });
+
         buildGoogleApiClient();
     }
 
-    public void getUser(JSONArray jsonArray)
+
+    public void setEvent(JSONArray jsonArray)
     {
-        if(jsonArray==null)
-        {
-            System.out.println("it was null");
-            return;
-        }
         for(int i=0; i<jsonArray.length();i++){
             JSONObject json = null;
             try {
                 json = jsonArray.getJSONObject(i);
-                this.userFullName.setText(json.getString("name"));
+                String result = json.getString("result");
+                if( result.equals("success") )
+                {
+                    ImageView image = (ImageView)NewFragment.getView().findViewById(R.id.image);
+                    if(image.getDrawable() != null) {
+                        Bitmap bitmap = ((BitmapDrawable) image.getDrawable()).getBitmap();
+                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+                        Hashtable<String, String> params = new Hashtable<>();
+                        params.put("ID", json.getString("ID"));
+                        params.put("image", Base64.encodeToString(stream.toByteArray(), Base64.DEFAULT));
+                        image.destroyDrawingCache();
+                        bitmap.recycle();
+                        new DBHandler("dummyUser", "set_image", params, "setImage", this).execute();
+                    }
+                }
+                else
+                    System.out.println("error");
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
-        decrementComponentsProcessed();
+
+    }
+
+    @Override
+    public void onBackPressed() {
+        int count = getFragmentManager().getBackStackEntryCount();
+
+        if (count == 0) {
+            super.onBackPressed();
+            //additional code
+        } else {
+            getFragmentManager().popBackStack();
+            stopSpinner();
+        }
+    }
+
+    public void setImage(JSONArray jsonArray)
+    {
+        for(int i=0; i<jsonArray.length();i++){
+            JSONObject json = null;
+            try {
+                json = jsonArray.getJSONObject(i);
+                String result = json.getString("result");
+                if( result.equals("success") )
+                {
+                    toast("Event added succesfully");
+                    stopSpinner();
+                    finish();
+                    startActivity(getIntent());
+                }
+                else
+                    System.out.println("error");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
     public void onMapReady(final GoogleMap map) {
-        this.mMap = map;
-        if(mLastLocation!=null) {
-            LatLng mLocation = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
-            this.mMap.setMyLocationEnabled(true);
-            this.mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mLocation, 13));
+        mMap = map;
+        mMap.setIndoorEnabled(true);
+        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+            if(haveNetworkConnection()) {
+                if (mLastLocation != null) {
+                    LatLng mLocation = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
+                    this.mMap.setMyLocationEnabled(true);
+                    this.mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mLocation, 13));
+                }
+                loadingIcon.post(new Starter());
+            }
+            else
+                toast("No internet connection");
         }
-        loadingIcon.post(new Starter());
-        //
+        else
+        {
+            toast("Location services is off");
+        }
+    }
+
+    boolean haveNetworkConnection() {
+        boolean haveConnectedWifi = false;
+        boolean haveConnectedMobile = false;
+
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo[] netInfo = cm.getAllNetworkInfo();
+        for (NetworkInfo ni : netInfo) {
+            if (ni.getTypeName().equalsIgnoreCase("WIFI"))
+                if (ni.isConnected())
+                    haveConnectedWifi = true;
+            if (ni.getTypeName().equalsIgnoreCase("MOBILE"))
+                if (ni.isConnected())
+                    haveConnectedMobile = true;
+        }
+        return haveConnectedWifi || haveConnectedMobile;
+    }
+
+    public LatLng getLatLng()
+    {
+        return new LatLng(mLastLocation.getLatitude(),mLastLocation.getLongitude());
     }
 
     public void getUserFeed(JSONArray jsonArray)
@@ -208,14 +334,15 @@ public class FeedActivity extends FragmentActivity implements OnMapReadyCallback
                             .title(json.getString("name"))
                             .snippet(json.getString("address"))
                             .icon(BitmapDescriptorFactory.fromResource(assetName))));
-                    events.add(new ArrayList<String>(Arrays.asList(String.valueOf(json.getInt("ID")),json.getString("name"),json.getString("address"),json.getString("interests"))));
+                    events.add(new ArrayList<String>(Arrays.asList(String.valueOf(json.getInt("ID")),json.getString("name"),json.getString("address"),json.getString("interests"),json.getString("date"),"true")));
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
-        FeedArrayAdapter adapter = new FeedArrayAdapter(this, events);
-        this.feed.setAdapter(adapter);
+        final FeedArrayAdapter adapter = new FeedArrayAdapter(this, events);
+        getFeedClass().feed.setAdapter(adapter);
+
         decrementComponentsProcessed();
     }
 
@@ -234,7 +361,7 @@ public class FeedActivity extends FragmentActivity implements OnMapReadyCallback
         decrementComponentsProcessed();
     }
 
-    private void toast(String text){
+    public void toast(String text){
         Toast toast = Toast.makeText(this, text, Toast.LENGTH_SHORT);
         toast.show();
     }
@@ -273,89 +400,119 @@ public class FeedActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     public class FeedArrayAdapter extends ArrayAdapter<ArrayList> {
-        private String IMG_URL = "http://nearme.host22.com/images/events/";
-        private Context context;
+
+        private final String IMG_URL = "http://nearme.host22.com/images/events/";
         private ArrayList<ArrayList<String>> values;
-        private View rowView;
-        private ImageView eImage;
-        private TextView eInterestColor;
-        private TextView eName;
-        private TextView eAddress;
-        private TextView eID;
-        private ArrayList<String> params;
         private String color="";
+        private Typeface myTypeface;
+        private SimpleDateFormat sdf;
+        private Date date;
 
         public FeedArrayAdapter(Context context,ArrayList values) {
             super(context,R.layout.feed_item, values);
-            this.context = context;
             this.values = values;
         }
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            LayoutInflater inflater = (LayoutInflater) context
-                    .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            rowView = inflater.inflate(R.layout.feed_item, parent, false);
-            eImage = (ImageView) rowView.findViewById(R.id.eImage);
-            eInterestColor = (TextView) rowView.findViewById(R.id.eInterestColor);
-            eName = (TextView) rowView.findViewById(R.id.eName);
-            eAddress = (TextView) rowView.findViewById(R.id.eAddress);
-            eID = (TextView) rowView.findViewById(R.id.eID);
-            params = (ArrayList)values.get(position);
-            new IMGHandler(eImage, this.IMG_URL+params.get(0)+".jpg", getFeedClass()).execute(80);
-            eID.setText(params.get(0));
-            eName.setText(params.get(1));
-            eAddress.setText(params.get(2));
+            final ViewHolder holder;
 
-            switch (params.get(3))
-            {
+            if (convertView == null) {
+                convertView = LayoutInflater.from(getContext()).inflate(R.layout.feed_item,parent,false);
+
+                holder = new ViewHolder();
+                holder.eInterestColor = (TextView) convertView.findViewById(R.id.eInterestColor);
+                holder.eImage = (ImageView) convertView.findViewById(R.id.eImage);
+                holder.eName = (TextView) convertView.findViewById(R.id.eName);
+                holder.eAddress = (TextView) convertView.findViewById(R.id.eAddress);
+                holder.eTime = (TextView) convertView.findViewById(R.id.eTime);
+                holder.eID = (TextView) convertView.findViewById(R.id.eID);
+                convertView.setTag(holder);
+            }
+            else {
+                holder = (ViewHolder) convertView.getTag();
+            }
+
+            myTypeface = Typeface.createFromAsset(getAssets(), "lobster.otf");
+            holder.eName.setTypeface(myTypeface);
+            holder.eAddress.setTypeface(myTypeface);
+            holder.eTime.setTypeface(myTypeface);
+            holder.eID.setVisibility(View.GONE);
+
+            final ArrayList<String> params = (ArrayList) values.get(position);
+
+            switch (params.get(3)) {
                 case "Music":
-                    color="#F22613";
+                    color = "#F22613";
                     break;
                 case "Sport":
-                    color="#26C281";
+                    color = "#26C281";
                     break;
                 case "Alcohol":
-                    color="#22313F";
+                    color = "#22313F";
                     break;
                 case "Animals":
-                    color="#663399";
+                    color = "#663399";
                     break;
                 case "Art":
-                    color="#F62459";
+                    color = "#F62459";
                     break;
                 case "Business":
-                    color="#6C7A89";
+                    color = "#6C7A89";
                     break;
                 case "Cinema":
-                    color="#F89406";
+                    color = "#F89406";
                     break;
                 case "Food":
-                    color="#F9BF3B";
+                    color = "#F9BF3B";
                     break;
                 case "Night Life":
-                    color="#1F3A93";
+                    color = "#1F3A93";
                     break;
                 case "Theater":
-                    color="#4183D7";
+                    color = "#4183D7";
                     break;
                 default:
                     break;
             }
+            holder.eInterestColor.setBackgroundColor(Color.parseColor(color));
+            holder.eName.setText(params.get(1));
+            holder.eAddress.setText(params.get(2));
+            sdf = new SimpleDateFormat("yyyy-M-dd hh:mm:ss");
+            date = null;
+            try {
+                date = sdf.parse(params.get(4));
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            holder.eTime.setText(DateUtils.getRelativeTimeSpanString(date != null ? date.getTime() : 0, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS));
+            holder.eID.setText(params.get(0));
+            if(params.get(5).equals("true")) {
+                Picasso.with(getContext()).load(this.IMG_URL + params.get(0) + ".jpg").error(R.drawable.img_unavailable).resize(80, 80).into(holder.eImage, new Callback() {
+                    @Override
+                    public void onSuccess() {
+                        Log.e("image", "success");
+                    }
 
-            eInterestColor.setBackgroundColor(Color.parseColor(color));
-            //eName.setTextColor(Color.WHITE);
-            //eAddress.setTextColor(Color.WHITE);
-            eID.setVisibility(View.GONE);
-            rowView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onError() {
+                        holder.eImage.setImageResource(R.drawable.img_unavailable);
+                        params.set(5, "false");
+                    }
+                });
+            }
+            else
+                holder.eImage.setImageResource(R.drawable.img_unavailable);
+
+            convertView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    TextView id = (TextView)v.findViewById(R.id.eID);
-                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(markers.get(id.getText().toString()).getPosition(), 19));
+                    TextView id = (TextView) v.findViewById(R.id.eID);
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(markers.get(id.getText().toString()).getPosition(), 18));
                 }
             });
 
-            return rowView;
+            return convertView;
         }
     }
 
@@ -364,21 +521,33 @@ public class FeedActivity extends FragmentActivity implements OnMapReadyCallback
         return FeedActivity.this;
     }
 
+    public void setBlurBool(Boolean value)
+    {
+        blurApplied = value;
+    }
+
+    public void applyBlur()
+    {
+        layout.setDrawingCacheEnabled(true);
+        layout.buildDrawingCache();
+        blurImage = BlurImage(layout.getDrawingCache());
+        layout.setDrawingCacheEnabled(false);
+        blur.setImageBitmap(blurImage);
+        blurApplied = true;
+    }
+
     public void startSpinner()
     {
         componentsProcessed++;
         if(!spinnerStarted) {
-            if(!blurApplied) {
-                layout.setDrawingCacheEnabled(true);
-                layout.buildDrawingCache();
-                blurImage = BlurImage(layout.getDrawingCache());
-                layout.setDrawingCacheEnabled(false);
-                blur.setImageBitmap(blurImage);
-                blurApplied = true;
-            }
+            spinnerStarted = true;
+
+            applyBlur();
+
             feed.setVisibility(View.INVISIBLE);
             blur.setClickable(true);
             blur.setVisibility(View.VISIBLE);
+
             loadingLayout.setVisibility(View.VISIBLE);
             loadingIcon.setVisibility(View.VISIBLE);
             loadingViewAnim.start();
@@ -395,12 +564,18 @@ public class FeedActivity extends FragmentActivity implements OnMapReadyCallback
 
     void stopSpinner()
     {
+        blur.setVisibility(View.GONE);
+        blur.setClickable(false);
+        blur.setImageDrawable(null);
+        if(blurImage != null && !blurImage.isRecycled()) {
+            blurImage.recycle();
+            blurImage = null;
+        }
+        System.gc();
+        spinnerStarted = false;
         loadingLayout.setVisibility(View.GONE);
         loadingIcon.setVisibility(View.GONE);
         loadingViewAnim.stop();
-        blur.setVisibility(View.GONE);
-        blur.setClickable(false);
-
     }
 
     void decrementComponentsProcessed()
@@ -433,12 +608,10 @@ public class FeedActivity extends FragmentActivity implements OnMapReadyCallback
             // TODO: handle exception
             return input;
         }
-
     }
 
     private class Starter implements Runnable {
         public void run() {
-            //start Asyn Task here
             new DBHandler(user,"get_user_settings",null,"getUserSettings",getFeedClass()).execute();
         }
     }

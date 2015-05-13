@@ -1,11 +1,12 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/eView"
+    android:background="@color/white"
     android:layout_width="fill_parent"
     android:layout_height="?android:attr/listPreferredItemHeight">
 
     <TextView
         android:id="@+id/eInterestColor"
-        android:layout_width="15dp"
+        android:layout_width="10dp"
         android:layout_height="80dp"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
@@ -17,31 +18,42 @@
         android:layout_height="80dp"
         android:layout_toRightOf="@id/eInterestColor"
         android:layout_alignParentTop="true"
-        android:layout_marginRight="6dp"
-        android:layout_alignBottom="@+id/eAddress" />
-
-    <TextView
-        android:id="@+id/eAddress"
-        android:layout_width="fill_parent"
-        android:layout_height="26dp"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:layout_toRightOf="@id/eImage"
-        android:ellipsize="marquee"
-        android:singleLine="true"
-        android:textSize="16sp"/>
+        android:layout_marginRight="6dp"
+        />
 
     <TextView
         android:id="@+id/eName"
-        android:layout_width="fill_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@id/eAddress"
-        android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
-        android:layout_alignWithParentIfMissing="true"
         android:layout_toRightOf="@id/eImage"
-        android:gravity="center_vertical"
-        android:textSize="22sp" />
+        android:textSize="18sp"
+        android:layout_alignParentEnd="true"
+        android:textColor="@color/black"/>
+
+    <TextView
+        android:id="@+id/eAddress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:layout_below="@+id/eName"
+        android:layout_alignParentEnd="true"
+        android:layout_toEndOf="@+id/eImage"
+        android:textColor="@color/black"/>
+    
+    <TextView
+        android:id="@+id/eTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="ago"
+        android:textSize="12sp"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:gravity="end"
+        android:layout_marginRight="10sp"
+        android:layout_below="@id/eAddress"
+        android:textColor="@color/black"/>
 
     <TextView
         android:id="@+id/eID"

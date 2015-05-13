@@ -1,24 +1,39 @@
 package com.roni.haim.nearme;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.text.format.DateUtils;
 import android.util.Base64;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.squareup.picasso.Callback;
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -34,20 +49,23 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Locale;
 
 
 public class MainActivity extends ActionBarActivity implements
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     private String user;
-    private TextView userFullName;
-    private ImageView userPic;
+    private ListView feed;
+    private ArrayList<ArrayList<String>> events;
     //private TextView mLatitudeText;
     //private TextView mLongitudeText;
 
@@ -60,15 +78,9 @@ public class MainActivity extends ActionBarActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         this.user = "haimomesi@hotmail.com";
-        this.userFullName = (TextView) this.findViewById(R.id.userFullName);
-        this.userPic = (ImageView)findViewById(R.id.userPic);
-        userPic.setImageResource(R.drawable.logo);
-        //this.mLatitudeText = (TextView) this.findViewById(R.id.mLatitudeText);
-        //this.mLongitudeText = (TextView) this.findViewById(R.id.mLongitudeText);
-        //this.map = ((MapFragment)getFragmentManager().findFragmentById(R.id.map)).getMap();
-        //this.map.setMyLocationEnabled(true);
-        //buildGoogleApiClient();
-
+        this.feed = (ListView)findViewById(R.id.feed);
+        this.events = new ArrayList<ArrayList<String>>();
+        new DBHandler(this.user,"get_user_feed",null,"getUserFeed",this).execute();
 
         /*
         SET USER STUB
@@ -127,8 +139,10 @@ public class MainActivity extends ActionBarActivity implements
         params.put("lng", "34.772329");
         params.put("type","bar");
         new DBHandler(this.user,"set_event",params,"setEvent",this).execute();
-        //TODO ADD IMAGE
+
         */
+
+        /*
         Bitmap bitmap = ((BitmapDrawable)userPic.getDrawable()).getBitmap();
         ByteArrayOutputStream stream=new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
@@ -136,7 +150,186 @@ public class MainActivity extends ActionBarActivity implements
         Hashtable<String,String> params = new Hashtable<String,String>();
         params.put("image",Base64.encodeToString(stream.toByteArray(), Base64.DEFAULT));
         new DBHandler(user,"set_image",params,"setUser",this).execute();
+        */
 
+    }
+
+    public void getUserFeed(JSONArray jsonArray)
+    {
+        float[] results = new float[1];
+        for(int i=0; i<jsonArray.length();i++){
+            JSONObject json = null;
+            try {
+                json = jsonArray.getJSONObject(i);
+                    int assetName=0;
+                    switch (json.getString("interests"))
+                    {
+                        case "Music":
+                            assetName=R.drawable.red_marker;
+                            break;
+                        case "Sport":
+                            assetName=R.drawable.green_marker;
+                            break;
+                        case "Alcohol":
+                            assetName=R.drawable.dark_marker;
+                            break;
+                        case "Animals":
+                            assetName=R.drawable.purple_marker;
+                            break;
+                        case "Art":
+                            assetName=R.drawable.pink_marker;
+                            break;
+                        case "Business":
+                            assetName=R.drawable.grey_marker;
+                            break;
+                        case "Cinema":
+                            assetName=R.drawable.orange_marker;
+                            break;
+                        case "Food":
+                            assetName=R.drawable.yellow_marker;
+                            break;
+                        case "Night Life":
+                            assetName=R.drawable.dark_blue_marker;
+                            break;
+                        case "Theater":
+                            assetName=R.drawable.blue_marker;
+                            break;
+                        default:
+                            break;
+                    }
+                    events.add(new ArrayList<String>(Arrays.asList(String.valueOf(json.getInt("ID")),json.getString("name"),json.getString("address"),json.getString("interests"),json.getString("date"),"true")));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+        final FeedArrayAdapter adapter = new FeedArrayAdapter(this, events);
+        getFeedClass().feed.setAdapter(adapter);
+    }
+
+    MainActivity getFeedClass()
+    {
+        return MainActivity.this;
+    }
+
+    static class ViewHolder {
+        TextView eInterestColor;
+        ImageView eImage;
+        TextView eName;
+        TextView eAddress;
+        TextView eTime;
+        TextView eID;
+    }
+
+    public class FeedArrayAdapter extends ArrayAdapter<ArrayList> {
+
+        private final String IMG_URL = "http://nearme.host22.com/images/events/";
+        private ArrayList<ArrayList<String>> values;
+        private String color="";
+        private Typeface myTypeface;
+        private SimpleDateFormat sdf;
+        private Date date;
+
+        public FeedArrayAdapter(Context context,ArrayList values) {
+            super(context,R.layout.feed_item, values);
+            this.values = values;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            final ViewHolder holder;
+
+            if (convertView == null) {
+                convertView = LayoutInflater.from(getContext()).inflate(R.layout.feed_item,parent,false);
+
+                holder = new ViewHolder();
+                holder.eInterestColor = (TextView) convertView.findViewById(R.id.eInterestColor);
+                holder.eImage = (ImageView) convertView.findViewById(R.id.eImage);
+                holder.eName = (TextView) convertView.findViewById(R.id.eName);
+                holder.eAddress = (TextView) convertView.findViewById(R.id.eAddress);
+                holder.eTime = (TextView) convertView.findViewById(R.id.eTime);
+                holder.eID = (TextView) convertView.findViewById(R.id.eID);
+
+                convertView.setTag(holder);
+                Log.e("new", "on position " + position);
+            }
+            else {
+                holder = (ViewHolder) convertView.getTag();
+                Log.e("old", "on position "+ position);
+            }
+
+            myTypeface = Typeface.createFromAsset(getAssets(), "lobster.otf");
+            holder.eName.setTypeface(myTypeface);
+            holder.eAddress.setTypeface(myTypeface);
+            holder.eTime.setTypeface(myTypeface);
+            holder.eID.setVisibility(View.GONE);
+
+            final ArrayList<String> params = (ArrayList) values.get(position);
+
+            switch (params.get(3)) {
+                case "Music":
+                    color = "#F22613";
+                    break;
+                case "Sport":
+                    color = "#26C281";
+                    break;
+                case "Alcohol":
+                    color = "#22313F";
+                    break;
+                case "Animals":
+                    color = "#663399";
+                    break;
+                case "Art":
+                    color = "#F62459";
+                    break;
+                case "Business":
+                    color = "#6C7A89";
+                    break;
+                case "Cinema":
+                    color = "#F89406";
+                    break;
+                case "Food":
+                    color = "#F9BF3B";
+                    break;
+                case "Night Life":
+                    color = "#1F3A93";
+                    break;
+                case "Theater":
+                    color = "#4183D7";
+                    break;
+                default:
+                    break;
+            }
+            holder.eInterestColor.setBackgroundColor(Color.parseColor(color));
+            holder.eName.setText(params.get(1));
+            holder.eAddress.setText(params.get(2));
+            sdf = new SimpleDateFormat("yyyy-M-dd hh:mm:ss", Locale.US);
+            date = null;
+            try {
+                date = sdf.parse(params.get(4));
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            holder.eTime.setText(DateUtils.getRelativeTimeSpanString(date != null ? date.getTime() : 0, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS));
+            holder.eID.setText(params.get(0));
+            if(params.get(5).equals("true")) {
+                Picasso.with(getContext()).load(this.IMG_URL + params.get(0) + ".jpg").resize(80, 80).into(holder.eImage, new Callback() {
+                    @Override
+                    public void onSuccess() {
+                        Log.e("image","success");
+                    }
+
+                    @Override
+                    public void onError() {
+                        Log.e("image","failure");
+                        holder.eImage.setImageResource(R.drawable.img_unavailable);
+                        params.set(5,"false");
+                    }
+                });
+            }
+
+            return convertView;
+        }
     }
 
     public void getUser(JSONArray jsonArray)
@@ -182,29 +375,6 @@ public class MainActivity extends ActionBarActivity implements
             try {
                 json = jsonArray.getJSONObject(i);
                 System.out.println(json.toString());
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public void getUserFeed(JSONArray jsonArray)
-    {
-        for(int i=0; i<jsonArray.length();i++){
-            JSONObject json = null;
-            try {
-                json = jsonArray.getJSONObject(i);
-                //this.map.addMarker(new MarkerOptions()
-                //.position(new LatLng(json.getDouble("lat"), json.getDouble("lng"))));
-                System.out.println(
-                    "ID: " + json.getString("ID") +
-                    "Date: " + json.getString("date") +
-                    " name: " + json.getString("name") +
-                    " Interests: " + json.getString("interests") +
-                    " Address: " + json.getString("address") +
-                    " Lat : "+json.getDouble("lat") +
-                    " Lng : "+json.getDouble("lng") +
-                    " Address: " + json.getString("type"));
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -265,15 +435,6 @@ public class MainActivity extends ActionBarActivity implements
         }
     }
 
-    /*
-    protected synchronized void buildGoogleApiClient() {
-        this.mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
-    }
-    */
 
     public void SetUserDetails(JSONArray jsonArray)
     {
@@ -281,8 +442,8 @@ public class MainActivity extends ActionBarActivity implements
             JSONObject json = null;
             try {
                 json = jsonArray.getJSONObject(i);
-                new IMGHandler(this.userPic,"http://nearme.host22.com/images/users/"+this.user+".jpg",this).execute(70);
-                this.userFullName.setText(json.getString("name"));
+               // new IMGHandler(this.userPic,"http://nearme.host22.com/images/users/"+this.user+".jpg",this).execute(70);
+                //this.userFullName.setText(json.getString("name"));
 
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -310,29 +471,8 @@ public class MainActivity extends ActionBarActivity implements
             }
         }
 
-        this.userFullName.setText(s);
+        //this.userFullName.setText(s);
     }
-
-    /*
-    public void setOnMap(JSONArray jsonArray) {
-        String s  = "";
-        for(int i=0; i<jsonArray.length();i++) {
-            JSONObject json = null;
-            try {
-                json = jsonArray.getJSONObject(i);
-
-                s = s +
-                        "Lat : "+json.getDouble("lat")+"\n"+
-                        "Lng : "+json.getDouble("lng")+"\n\n";
-                //this.map.addMarker(new MarkerOptions()
-                        .position(new LatLng(json.getDouble("lat"), json.getDouble("lng"))));
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-        this.userFullName.setText(s);
-    }
-    */
 
     public void showInterests(JSONArray jsonArray) {
         String s  = "Interests :\n";
@@ -346,7 +486,7 @@ public class MainActivity extends ActionBarActivity implements
                 e.printStackTrace();
             }
         }
-        this.userFullName.setText(s);
+        //this.userFullName.setText(s);
     }
 
     @Override

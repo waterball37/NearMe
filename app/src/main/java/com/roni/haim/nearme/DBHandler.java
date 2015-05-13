@@ -2,25 +2,27 @@ package com.roni.haim.nearme;
 
 import android.os.AsyncTask;
 import android.util.Log;
-import android.view.View;
-import android.widget.LinearLayout;
-
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
-
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Field;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.List;
 
 /**
  * Created by Haim Omesi & Roni Gonikman on 4/6/15.
@@ -28,31 +30,29 @@ import java.util.Hashtable;
 @SuppressWarnings("deprecation")
 class DBHandler extends AsyncTask<Integer,Long,JSONArray>
 {
-    private final String user;
-    private final String action;
-    private final Hashtable<String,String> params;
-    private final String callback;
-    private final Object senderClass;
+    private String user;
+    private String action;
+    private Hashtable<String,String> params;
+    private String callback;
+    private WeakReference<Object> senderClass;
 
     public DBHandler(String user, String action, Hashtable<String,String> params, String callback, Object senderClass) {
         this.user = user;
         this.action = action;
         this.params = params;
         this.callback = callback;
-        this.senderClass = senderClass;
+        this.senderClass = new WeakReference<Object>(senderClass);
     }
 
     JSONArray Launch(String user, String action, Hashtable<String, String> params)
     {
-        String url = "http://nearme.host22.com/dbConnector.php?action="+action+"&user="+user;
-        if(params!=null)
-        {
+        String url = "http://nearme.host22.com/dbConnector.php";
+        List<NameValuePair> nameValuePair = new ArrayList<NameValuePair>();
+        nameValuePair.add(new BasicNameValuePair("action", action));
+        nameValuePair.add(new BasicNameValuePair("user", user));
+        if(params!=null) {
             for (String key : params.keySet()) {
-                try {
-                    url=url+"&params["+key+"]="+ URLEncoder.encode(params.get(key),"UTF-8");
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
+                nameValuePair.add(new BasicNameValuePair("params[" + key + "]", params.get(key)));
             }
         }
         // Get HttpResponse Object from url.
@@ -62,8 +62,10 @@ class DBHandler extends AsyncTask<Integer,Long,JSONArray>
         try
         {
             DefaultHttpClient httpClient = new DefaultHttpClient();  // Default HttpClient
-            HttpGet httpGet = new HttpGet(url);
-            HttpResponse httpResponse = httpClient.execute(httpGet);
+            HttpPost httpPost = new HttpPost(url);
+            httpPost.setEntity(new UrlEncodedFormEntity(nameValuePair,"UTF-8"));
+            //HttpGet httpGet = new HttpGet(url);
+            HttpResponse httpResponse = httpClient.execute(httpPost);
             httpEntity = httpResponse.getEntity();
         } catch (ClientProtocolException e) {
             // Signals error in http protocol
@@ -80,10 +82,9 @@ class DBHandler extends AsyncTask<Integer,Long,JSONArray>
                 String entityResponse = EntityUtils.toString(httpEntity);
                 Log.e("Entity Response  : ", entityResponse);
                 jsonArray = new JSONArray(entityResponse);
-            } catch (JSONException e) {
+            } catch (JSONException | IOException e) {
                 e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
+                return null;
             }
         }
         return jsonArray;
@@ -94,13 +95,22 @@ class DBHandler extends AsyncTask<Integer,Long,JSONArray>
         return Launch(this.user, this.action, this.params);
     }
 
+
     @Override
     protected void onPreExecute() {
         try {
-            Class noparams[] = {};
-            Method method = null;
-            method = this.senderClass.getClass().getDeclaredMethod ("startSpinner", noparams);
-            method.invoke (this.senderClass);
+            if(senderClass != null)
+            {
+                Object sender = senderClass.get();
+                if(sender != null)
+                {
+                    Class noparams[] = {};
+                    Method method = null;
+                    method = sender.getClass().getDeclaredMethod ("startSpinner", noparams);
+                    method.invoke (sender);
+                }
+            }
+
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         } catch (InvocationTargetException e) {
@@ -110,11 +120,21 @@ class DBHandler extends AsyncTask<Integer,Long,JSONArray>
         }
     }
 
+
     @Override
     protected void onPostExecute(JSONArray jsonArray) {
         try {
-            Method method = this.senderClass.getClass().getDeclaredMethod (this.callback, JSONArray.class);
-            method.invoke (this.senderClass, jsonArray);
+            if(senderClass != null)
+            {
+                Object sender = senderClass.get();
+                senderClass=null;
+                if(sender != null)
+                {
+                    params = null;
+                    Method method = sender.getClass().getDeclaredMethod (this.callback, JSONArray.class);
+                    method.invoke (sender, jsonArray);
+                }
+            }
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         } catch (NoSuchMethodException e) {

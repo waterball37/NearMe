@@ -55,7 +55,7 @@ public class SignUpActivity extends ActionBarActivity {
     private EditText userFullName;
     private ImageView viewImage;
     private Button b;
-    //private boolean ans = false;
+    private boolean ans = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,15 +65,15 @@ public class SignUpActivity extends ActionBarActivity {
         userID = (EditText)findViewById(R.id.editTextUserName);
         userPass = (EditText)findViewById(R.id.editTextPassword);
         userPassConfirm = (EditText)findViewById(R.id.editTextConfirmPassword);
-        viewImage = (ImageView)findViewById(R.id.viewImage);
-        b=(Button)findViewById(R.id.btnSelectPhoto);
+        //viewImage = (ImageView)findViewById(R.id.viewImage);
+        //b=(Button)findViewById(R.id.btnSelectPhoto);
         //viewImage=(ImageView)findViewById(R.id.viewImage);
-        b.setOnClickListener(new View.OnClickListener() {
+       /* b.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 selectImage();
             }
-        });
+        });*/
 
     }
 
@@ -85,7 +85,7 @@ public class SignUpActivity extends ActionBarActivity {
     }
 
 
-    private void selectImage() {
+   /* private void selectImage() {
 
         final CharSequence[] options = { "Take Photo", "Choose from Gallery","Cancel" };
 
@@ -113,10 +113,10 @@ public class SignUpActivity extends ActionBarActivity {
             }
         });
         builder.show();
-    }
+    }*/
 
 
-    @Override
+   /* @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
@@ -180,7 +180,7 @@ public class SignUpActivity extends ActionBarActivity {
         }
 
     }
-
+*/
     public void registration(View view)
     {
         userID.setError(null);
@@ -213,27 +213,22 @@ public class SignUpActivity extends ActionBarActivity {
                 String pass = userPass.getText().toString();
                 String userName = userFullName.getText().toString();
                 String passConfirm = userPassConfirm.getText().toString();
-                if(pass.equals(passConfirm)) {
+                if (!pass.equals(passConfirm))
+                {
+                    userPassConfirm.setError("the passwords are not equals");
+                    ans = false;
+                }
+                check(user,pass);
+
+                if(ans==true) {
                     Hashtable<String,String> params = new Hashtable<String,String>();
                     params.put("name",userName);
                     params.put("ID",user);
                     params.put("pass",BCrypt.hashpw(pass, BCrypt.gensalt()));
                     new DBHandler(user,"set_user",params,"setUser",this).execute();
                 }
-        } else {
-            JSONObject json = null;
-            try {
-                json = jsonArray.getJSONObject(0);
-                String id = json.getString("ID");
-                String pass = json.getString("pass");
-                System.out.println(
-                        "id: " + json.getString("ID") +
-                                "pass: " + json.getString("pass"));
-
-
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+        }
+        else {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("USER EXISTS");
             builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
@@ -252,23 +247,29 @@ public class SignUpActivity extends ActionBarActivity {
                 json = jsonArray.getJSONObject(i);
                 String result = json.getString("result");
                 if (result.equals("success")) {
-                    String user = userID.getText().toString();
-                    Bitmap bitmap = ((BitmapDrawable) viewImage.getDrawable()).getBitmap();
-                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
-                    //byte[] imageInByte=stream.toByteArray();
-                    Hashtable<String, String> params = new Hashtable<String, String>();
-                    params.put("image", Base64.encodeToString(stream.toByteArray(), Base64.DEFAULT));
-                    new DBHandler(user, "set_image", params, "setImage", this).execute();
-                } else
-                    System.out.println("error");
+                    Intent intent = new Intent(this, MainActivity.class);
+                    startActivity(intent);
+                }
+                else
+                {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    builder.setTitle("COULDN'T CREATE AN ACCOUNT");
+                    builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            return;
+                        }
+                    });
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+
+                }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    public void setImage(JSONArray jsonArray) {
+    /*public void setImage(JSONArray jsonArray) {
         for(int i=0; i<jsonArray.length();i++) {
             JSONObject json = null;
             try {
@@ -284,18 +285,23 @@ public class SignUpActivity extends ActionBarActivity {
                 e.printStackTrace();
             }
         }
-    }
-
-
-   /* public void check(String id,String pass)
-    {
-        mEmailView.setError(null);
-        mPasswordView.setError(null);
-        if (TextUtils.isEmpty(pass) || !isPasswordValid(pass))
-            mPasswordView.setError(getString(R.string.error_invalid_password));
-        if(TextUtils.isEmpty(id) || isEmailValid(id))
-            mEmailView.setError(getString(R.string.error_invalid_email));
     }*/
+
+
+    public void check(String id,String pass)
+    {
+        userID.setError(null);
+        userPass.setError(null);
+
+        if (TextUtils.isEmpty(pass) || !isPasswordValid(pass)) {
+            userPass.setError(getString(R.string.error_invalid_password));
+            ans = false;
+        }
+        if(TextUtils.isEmpty(id) || !isEmailValid(id)) {
+            userID.setError(getString(R.string.error_invalid_email));
+            ans = false;
+        }
+    }
 
     private boolean isEmailValid(String email) {
         return email.contains("@");

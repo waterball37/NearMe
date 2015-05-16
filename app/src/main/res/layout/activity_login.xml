@@ -25,15 +25,23 @@
 
             <EditText android:id="@+id/password" android:layout_width="match_parent"
                 android:layout_height="wrap_content" android:hint="@string/prompt_password"
-                android:imeActionId="@+id/login"
+
                 android:imeActionLabel="@string/action_sign_in_short"
                 android:imeOptions="actionUnspecified" android:inputType="textPassword"
                 android:maxLines="1" android:singleLine="true" />
 
             <Button android:id="@+id/email_sign_in_button" style="?android:textAppearanceSmall"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:layout_marginTop="16dp" android:text="sign_in" android:onClick="sign_in"
+                android:layout_marginTop="16dp" android:text="sign in" android:onClick="sign_in"
                 android:textStyle="bold" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="83dp"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="@string/sign_up_for_NearMe"
+                android:id="@+id/textView"
+                android:clickable="true"
+                android:layout_gravity="center_horizontal|bottom" android:onClick="registration"/>
 
         </LinearLayout>
     </ScrollView>

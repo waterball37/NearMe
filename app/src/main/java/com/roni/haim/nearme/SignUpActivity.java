@@ -1,59 +1,50 @@
 package com.roni.haim.nearme;
 
+import android.content.Context;
 import android.content.Intent;
-import android.graphics.drawable.BitmapDrawable;
-import android.support.v7.app.ActionBarActivity;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Base64;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.view.LayoutInflater;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.app.Activity;
-import android.support.v7.app.ActionBarActivity;
-import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.EditText;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.net.Uri;
-import android.os.Bundle;
-import android.app.Activity;
-import android.os.Environment;
-import android.provider.MediaStore;
-import android.util.Log;
-import android.view.Menu;
 import android.view.View;
-import android.widget.Button;
-import android.widget.ImageView;
-
+import android.widget.RelativeLayout;
+import android.widget.SeekBar;
+import android.widget.Spinner;
+import android.widget.TextView;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Hashtable;
 
 
-public class SignUpActivity extends ActionBarActivity {
+public class SignUpActivity extends Activity {
 
     private EditText userID;
     private EditText userPass;
     private EditText userPassConfirm;
     private EditText userFullName;
-    private ImageView viewImage;
+
+    private TextView userDetails;
+    private TextView interestsLabel;
+    private TextView radiusLabel;
+    private TextView settings_label;
+    private TextView login;
+    private TextView radius;
+
+    private SeekBar radiusSeekBar;
+    private String interests_selected;
+    private RelativeLayout sign_up_layout;
+    private Spinner interests;
     private Button b;
     private boolean ans = true;
 
@@ -65,168 +56,120 @@ public class SignUpActivity extends ActionBarActivity {
         userID = (EditText)findViewById(R.id.editTextUserName);
         userPass = (EditText)findViewById(R.id.editTextPassword);
         userPassConfirm = (EditText)findViewById(R.id.editTextConfirmPassword);
-        //viewImage = (ImageView)findViewById(R.id.viewImage);
-        //b=(Button)findViewById(R.id.btnSelectPhoto);
-        //viewImage=(ImageView)findViewById(R.id.viewImage);
-       /* b.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                selectImage();
-            }
-        });*/
+        userDetails = (TextView) findViewById(R.id.editDetails);
+        b = (Button)findViewById(R.id.buttonCreateAccount);
+        interestsLabel = (TextView) findViewById(R.id.interestsLabel);
+        radiusLabel = (TextView) findViewById(R.id.radiusLabel);
+        settings_label = (TextView) findViewById(R.id.settings_label);
+        radiusSeekBar = (SeekBar) findViewById(R.id.radiusSeekBar);
+        radius = (TextView) findViewById(R.id.radius);
+        interests = (Spinner)findViewById(R.id.interests);
+        login = (TextView) findViewById(R.id.login);
+        sign_up_layout = (RelativeLayout)findViewById(R.id.sign_up_layout);
 
+        Typeface mTypeface = Typeface.createFromAsset(getAssets(), "lobster.otf");
+        userFullName.setTypeface(mTypeface);
+        userID.setTypeface(mTypeface);
+        userPass.setTypeface(mTypeface);
+        userPassConfirm.setTypeface(mTypeface);
+        userDetails.setTypeface(mTypeface);
+        interestsLabel.setTypeface(mTypeface);
+        radiusLabel.setTypeface(mTypeface);
+        settings_label.setTypeface(mTypeface);
+        radius.setTypeface(mTypeface);
+        b.setTypeface(mTypeface);
+        login.setTypeface(mTypeface);
+
+        radiusSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            int progress = 0;
+
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progresValue, boolean fromUser) {
+                progress = progresValue;
+                radius.setText(String.valueOf(progresValue+1));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                //Toast.makeText(getApplicationContext(), "Started tracking seekbar", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+        String[] items = new String[]{"Alcohol", "Animals", "Art", "Business", "Cinema", "Food", "Music", "Night Life", "Sport", "Theater"};
+        ArrayList<String> values = new ArrayList<>(Arrays.asList(items));
+        MyCustomAdapter adapter = new MyCustomAdapter(this, values);
+        interests.setAdapter(adapter);
+
+       login.setOnClickListener(new View.OnClickListener() {
+           @Override
+           public void onClick(View v) {
+               Intent intent = new Intent(getBaseContext(), LoginActivity.class);
+               startActivity(intent);
+               finish();
+           }
+       });
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds options to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
+    protected void onDestroy() {
+        sign_up_layout.setBackgroundResource(0);
+        System.gc();
+        super.onDestroy();
     }
 
-
-   /* private void selectImage() {
-
-        final CharSequence[] options = { "Take Photo", "Choose from Gallery","Cancel" };
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(SignUpActivity.this);
-        builder.setTitle("Add Photo!");
-        builder.setItems(options, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int item) {
-                if (options[item].equals("Take Photo"))
-                {
-                    Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                    File f = new File(android.os.Environment.getExternalStorageDirectory(), "temp.jpg");
-                    intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(f));
-                    startActivityForResult(intent, 1);
-                }
-                else if (options[item].equals("Choose from Gallery"))
-                {
-                    Intent intent = new   Intent(Intent.ACTION_PICK,android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                    startActivityForResult(intent, 2);
-
-                }
-                else if (options[item].equals("Cancel")) {
-                    dialog.dismiss();
-                }
-            }
-        });
-        builder.show();
-    }*/
-
-
-   /* @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (resultCode == RESULT_OK) {
-            if (requestCode == 1) {
-                File f = new File(Environment.getExternalStorageDirectory().toString());
-                for (File temp : f.listFiles()) {
-                    if (temp.getName().equals("no_user.png")) {
-                        f = temp;
-                        break;
-                    }
-                }
-                try {
-                    Bitmap bitmap;
-                    BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
-
-                    bitmap = BitmapFactory.decodeFile(f.getAbsolutePath(),
-                            bitmapOptions);
-
-                    viewImage.setImageBitmap(bitmap);
-
-                    String path = android.os.Environment
-                            .getExternalStorageDirectory()
-                            + File.separator
-                            + "Phoenix" + File.separator + "default";
-                    f.delete();
-                    OutputStream outFile = null;
-                    File file = new File(path, String.valueOf(System.currentTimeMillis()) + ".jpg");
-                    try {
-                        outFile = new FileOutputStream(file);
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 85, outFile);
-                        outFile.flush();
-                        outFile.close();
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            } else if (requestCode == 2) {
-
-                Uri selectedImage = data.getData();
-                String[] filePath = {MediaStore.Images.Media.DATA};
-                Cursor c = getContentResolver().query(selectedImage, filePath, null, null, null);
-                c.moveToFirst();
-                int columnIndex = c.getColumnIndex(filePath[0]);
-                String picturePath = c.getString(columnIndex);
-                c.close();
-                Bitmap thumbnail = null;
-                    //BitmapFactory.Options options = new BitmapFactory.Options();
-                    //thumbnail = BitmapFactory.decodeStream(new java.net.URL(picturePath).openConnection().getInputStream(), null, options);
-                    thumbnail = BitmapFactory.decodeFile(picturePath);
-                //Log.w("path of image from gallery......******************.........", picturePath + "");
-                viewImage.setImageBitmap(thumbnail);
-                //b.setVisibility(View.GONE);
-            }
-        }
-
-    }
-*/
     public void registration(View view)
     {
+        ans = true;
         userID.setError(null);
         userPass.setError(null);
         userPassConfirm.setError(null);
+        userFullName.setError(null);
+        String userName = userFullName.getText().toString();
         String user = userID.getText().toString();
         String pass = userPass.getText().toString();
-        new DBHandler(user, "get_user", null, "getUser", this).execute();
-
-       /* Bitmap bitmap = ((BitmapDrawable)viewImage.getDrawable()).getBitmap();
-        ByteArrayOutputStream stream=new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
-        byte[] imageInByte=stream.toByteArray();
-        Hashtable<String,String> params = new Hashtable<String,String>();
-        params.put("image",imageInByte.toString());*/
-
-
-
-
-        //new DBHandler(user, "set_image", params, "setUser", this).execute();
-        //HttpFileUpload upload = new HttpFileUpload();
-        //upload.uploadFile(user);
+        String passConfirm = userPassConfirm.getText().toString();
+        if(userName.equals(""))
+        {
+            userFullName.setError("You haven't enter a name");
+            ans = false;
+        }
+        if (!pass.equals(passConfirm))
+        {
+            userPassConfirm.setError("the passwords are not equals");
+            ans = false;
+        }
+        check(user, pass);
+        interests_selected = ((MyCustomAdapter)interests.getAdapter()).getSelectedInterests();
+        if(interests_selected.equals(""))
+        {
+            ans =  false;
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Please select at least one interest");
+            builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    return;
+                }
+            });
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        }
+        if(ans==true)
+            new DBHandler(user, "get_user", null, "getUser", this).execute();
     }
 
     public void getUser(JSONArray jsonArray) {
 
         if (jsonArray == null) {
-
-                String user = userID.getText().toString();
-                String pass = userPass.getText().toString();
-                String userName = userFullName.getText().toString();
-                String passConfirm = userPassConfirm.getText().toString();
-                if (!pass.equals(passConfirm))
-                {
-                    userPassConfirm.setError("the passwords are not equals");
-                    ans = false;
-                }
-                check(user,pass);
-
-                if(ans==true) {
-                    Hashtable<String,String> params = new Hashtable<String,String>();
-                    params.put("name",userName);
-                    params.put("ID",user);
-                    params.put("pass",BCrypt.hashpw(pass, BCrypt.gensalt()));
-                    new DBHandler(user,"set_user",params,"setUser",this).execute();
-                }
+                Hashtable<String,String> params = new Hashtable<String,String>();
+                params.put("name",userFullName.getText().toString());
+                params.put("ID",userID.getText().toString());
+                params.put("pass",BCrypt.hashpw(userPass.getText().toString(), BCrypt.gensalt()));
+                new DBHandler(userID.getText().toString(),"set_user",params,"setUser",this).execute();
         }
         else {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -247,8 +190,11 @@ public class SignUpActivity extends ActionBarActivity {
                 json = jsonArray.getJSONObject(i);
                 String result = json.getString("result");
                 if (result.equals("success")) {
-                    Intent intent = new Intent(this, MainActivity.class);
-                    startActivity(intent);
+                    Hashtable<String,String> params = new Hashtable<String,String>();
+                    params.put("ID",userID.getText().toString());
+                    params.put("interests",interests_selected);
+                    params.put("radius",radius.getText().toString());
+                    new DBHandler(userID.getText().toString(),"set_settings",params,"setSettings",this).execute();
                 }
                 else
                 {
@@ -269,29 +215,40 @@ public class SignUpActivity extends ActionBarActivity {
         }
     }
 
-    /*public void setImage(JSONArray jsonArray) {
+    public void setSettings(JSONArray jsonArray) {
         for(int i=0; i<jsonArray.length();i++) {
             JSONObject json = null;
             try {
                 json = jsonArray.getJSONObject(i);
                 String result = json.getString("result");
                 if (result.equals("success")) {
-                    System.out.println("success");
-                    Intent intent = new Intent(this, MainActivity.class);
+                    finish();
+                    System.gc();
+                    Intent intent = new Intent(this, FeedActivity.class);
+                    intent.putExtra("USER_ID", userID.getText().toString());
                     startActivity(intent);
-                } else
-                    System.out.println("error");
+                }
+                else
+                {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    builder.setTitle("COULDN'T SET SETTINGS");
+                    builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            return;
+                        }
+                    });
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+
+                }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
-    }*/
-
+    }
 
     public void check(String id,String pass)
     {
-        userID.setError(null);
-        userPass.setError(null);
 
         if (TextUtils.isEmpty(pass) || !isPasswordValid(pass)) {
             userPass.setError(getString(R.string.error_invalid_password));
@@ -309,5 +266,148 @@ public class SignUpActivity extends ActionBarActivity {
 
     private boolean isPasswordValid(String password) {
         return password.length() > 5;
+    }
+
+    private class MyCustomAdapter extends ArrayAdapter<String> {
+
+        Context context;
+        ArrayList<String> list;
+        ArrayList<Boolean> boolSelect;
+        private int defaultPosition;
+
+        public int getDefaultPosition() {
+            return defaultPosition;
+        }
+
+        public String getSelectedInterests()
+        {
+            boolean wasSelected = false;
+            String selected = "";
+            for(int i = 0 ; i< boolSelect.size() ; i++) {
+                if (boolSelect.get(i) == true) {
+                    if(wasSelected)
+                        selected += "," + list.get(i);
+                    else
+                    {
+                        wasSelected = true;
+                        selected += list.get(i);
+                    }
+                }
+            }
+            return selected;
+        }
+
+        public MyCustomAdapter(Context context, ArrayList<String> objects) {
+            super(context, 0, objects);
+            this.context = context;
+            list = objects;
+            boolSelect = new ArrayList<Boolean>();
+            for (int i = 0 ; i < list.size() ; i++)
+                boolSelect.add(false);
+        }
+
+        public void setDefaultPostion(int position) {
+            this.defaultPosition = position;
+        }
+
+        @Override
+        public View getDropDownView(int position, View convertView,
+                                    ViewGroup parent) {
+            return getCustomView(position, convertView, parent);
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            return getCustom(position, convertView, parent);
+        }
+
+        public View getCustom(int position, View convertView, ViewGroup parent) {
+
+            View row = LayoutInflater.from(context).inflate(
+                    R.layout.interests_item_signup, parent, false);
+
+            TextView interestName = (TextView) row.findViewById(R.id.interestName);
+            Typeface tf = Typeface.createFromAsset(context.getAssets(), "lobster.otf");
+            interestName.setTypeface(tf);
+
+            interestName.setText(list.get(position));
+
+            return row;
+        }
+
+        public View getCustomView(final int position, View convertView,
+                                  ViewGroup parent) {
+
+            View row = LayoutInflater.from(context).inflate(
+                    R.layout.interests_item, parent, false);
+
+            final TextView interestName = (TextView) row.findViewById(R.id.interestName);
+            final TextView interestColor = (TextView) row.findViewById(R.id.interestColor);
+            final RelativeLayout iView = (RelativeLayout) row.findViewById(R.id.iView);
+            Typeface tf = Typeface.createFromAsset(context.getAssets(), "lobster.otf");
+            interestName.setTypeface(tf);
+            interestName.setText(list.get(position));
+            String color = "";
+            switch (list.get(position)) {
+                case "Music":
+                    color = "#F22613";
+                    break;
+                case "Sport":
+                    color = "#26C281";
+                    break;
+                case "Alcohol":
+                    color = "#22313F";
+                    break;
+                case "Animals":
+                    color = "#663399";
+                    break;
+                case "Art":
+                    color = "#F62459";
+                    break;
+                case "Business":
+                    color = "#6C7A89";
+                    break;
+                case "Cinema":
+                    color = "#F89406";
+                    break;
+                case "Food":
+                    color = "#F9BF3B";
+                    break;
+                case "Night Life":
+                    color = "#1F3A93";
+                    break;
+                case "Theater":
+                    color = "#4183D7";
+                    break;
+                default:
+                    break;
+            }
+            interestColor.setBackgroundColor(Color.parseColor(color));
+
+            if(boolSelect.get(position) == true)
+            {
+                iView.setBackgroundColor(Color.parseColor(color));
+                interestName.setTextColor(Color.WHITE);
+            }
+
+            final String finalColor = color;
+
+            row.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (boolSelect.get(position) == false) {
+                        boolSelect.set(position, true);
+                        iView.setBackgroundColor(Color.parseColor(finalColor));
+                        interestName.setTextColor(Color.WHITE);
+                    } else {
+                        boolSelect.set(position, false);
+                        iView.setBackgroundColor(Color.WHITE);
+                        interestName.setTextColor(Color.BLACK);
+                    }
+                }
+            });
+
+            return row;
+        }
     }
 }

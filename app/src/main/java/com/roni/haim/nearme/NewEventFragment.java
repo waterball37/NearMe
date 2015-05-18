@@ -21,6 +21,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Spinner;
@@ -43,12 +44,24 @@ public class NewEventFragment extends Fragment {
     private int RESULT_LOAD_IMG = 1;
     private int RESULT_CAMERA_IMG = 2;
     private String imgDecodableString ="";
+    private FrameLayout new_event_layout;
     private EditText name;
     private EditText add;
     private Spinner interests;
     private ImageView image;
     private ImageButton deleteImage;
     private View frag;
+    private ImageView imageView;
+    private ImageView imageView2;
+    private ImageView imageView3;
+    private ImageView imageView4;
+    private ImageView imageView5;
+    private ImageView imageView6;
+    private ImageView imageView7;
+    private ImageView imageView8;
+    private ImageView imageView9;
+    private ImageButton addImageCamera;
+    private ImageButton addImageGallery;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -56,10 +69,24 @@ public class NewEventFragment extends Fragment {
     }
 
     @Override
-    public void onDestroyView() {
-        super.onDestroyView();
+    public void onDestroy() {
+        new_event_layout.setBackgroundResource(0);
+        addImageCamera.setBackgroundResource(0);
+        addImageGallery.setBackgroundResource(0);
+        deleteImage.setBackgroundResource(0);
+        image.setBackgroundResource(0);
+        imageView.setBackgroundResource(0);
+        imageView2.setBackgroundResource(0);
+        imageView3.setBackgroundResource(0);
+        imageView4.setBackgroundResource(0);
+        imageView5.setBackgroundResource(0);
+        imageView6.setBackgroundResource(0);
+        imageView7.setBackgroundResource(0);
+        imageView8.setBackgroundResource(0);
+        imageView9.setBackgroundResource(0);
         frag = null;
         System.gc();
+        super.onDestroy();
         // not cleaning up.
     }
 
@@ -67,7 +94,8 @@ public class NewEventFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         Typeface myTypeface = Typeface.createFromAsset(getActivity().getAssets(), "lobster.otf");
-        View frag = (View)inflater.inflate(R.layout.fragment_new_event, container, false);
+        frag = (View)inflater.inflate(R.layout.fragment_new_event, container, false);
+        new_event_layout = (FrameLayout) frag.findViewById(R.id.new_event_layout);
         add = (EditText)frag.findViewById(R.id.address);
         TextView addLabel = (TextView)frag.findViewById(R.id.address_label);
         TextView interest = (TextView)frag.findViewById(R.id.interest);
@@ -76,10 +104,20 @@ public class NewEventFragment extends Fragment {
         TextView imageLabel = (TextView)frag.findViewById(R.id.images);
         name = (EditText)frag.findViewById(R.id.name);
         Button post = (Button)frag.findViewById(R.id.post);
-        ImageButton addImageCamera = (ImageButton)frag.findViewById(R.id.add_image_camera);
-        ImageButton addImageGallery = (ImageButton)frag.findViewById(R.id.add_image_gallery);
+        addImageCamera = (ImageButton)frag.findViewById(R.id.add_image_camera);
+        addImageGallery = (ImageButton)frag.findViewById(R.id.add_image_gallery);
         deleteImage = (ImageButton)frag.findViewById(R.id.image_delete);
         image = (ImageView)frag.findViewById(R.id.image);
+        imageView = (ImageView)frag.findViewById(R.id.imageView);
+        imageView2 = (ImageView)frag.findViewById(R.id.imageView2);
+        imageView3 = (ImageView)frag.findViewById(R.id.imageView3);
+        imageView4 = (ImageView)frag.findViewById(R.id.imageView4);
+        imageView5 = (ImageView)frag.findViewById(R.id.imageView5);
+        imageView6 = (ImageView)frag.findViewById(R.id.imageView6);
+        imageView7 = (ImageView)frag.findViewById(R.id.imageView7);
+        imageView8 = (ImageView)frag.findViewById(R.id.imageView8);
+        imageView9 = (ImageView)frag.findViewById(R.id.imageView9);
+
         LatLng loc = ((FeedActivity) getActivity()).getLatLng();
         String address="";
         Geocoder geoCoder = new Geocoder(getActivity(), Locale.ENGLISH);

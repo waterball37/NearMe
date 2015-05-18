@@ -68,6 +68,7 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
     private int userRadius;
     private GoogleMap mMap;
     private ListView feed;
+    //private MyListView feed;
     private HashMap<String,Marker> markers;
     private ArrayList<ArrayList<String>> events;
 
@@ -111,13 +112,20 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        System.gc();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_feed);
-        this.user = "haimomesi@gmail.com";
+        Bundle extras = getIntent().getExtras();
+        if (extras != null) {
+            user = extras.getString("USER_ID");
+        }
+        else
+            user = "haimomesi@gmail.com";
 
-        this.feed = (ListView)findViewById(R.id.feed);
-        this.markers = new HashMap<String,Marker>();
-        this.events = new ArrayList<ArrayList<String>>();
+        feed = (ListView)findViewById(R.id.feed);
+        //feed = (MyListView)findViewById(R.id.feed);
+        markers = new HashMap<String,Marker>();
+        events = new ArrayList<ArrayList<String>>();
 
         loadingLayout = (LinearLayout)findViewById(R.id.spinnerContainer);
         loadingLayout.setVisibility(View.GONE);

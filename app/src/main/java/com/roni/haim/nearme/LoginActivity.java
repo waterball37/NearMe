@@ -11,6 +11,7 @@ import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.AsyncTask;
 
@@ -26,6 +27,8 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import org.json.JSONArray;
@@ -43,11 +46,10 @@ import android.content.DialogInterface;
  */
 public class LoginActivity extends Activity {
 
-    // UI references.
+    private LinearLayout login_layout;
     private String user;
     private AutoCompleteTextView mEmailView;
     private EditText mPasswordView;
-    //private boolean ans = false;
     private String email;
     private String password;
 
@@ -55,8 +57,18 @@ public class LoginActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+        login_layout = (LinearLayout) findViewById(R.id.login_layout);
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
         mPasswordView = (EditText) findViewById(R.id.password);
+        TextView mLogoLabel = (TextView) findViewById(R.id.logoLabel);
+        Button mSignIn = (Button) findViewById(R.id.email_sign_in_button);
+        TextView mSignUp = (TextView) findViewById(R.id.signUp);
+        Typeface mTypeface = Typeface.createFromAsset(getAssets(), "lobster.otf");
+        mSignUp.setTypeface(mTypeface);
+        mSignIn.setTypeface(mTypeface);
+        mLogoLabel.setTypeface(mTypeface);
+        mPasswordView.setTypeface(mTypeface);
+        mEmailView.setTypeface(mTypeface);
     }
 
     public void sign_in(View view) {
@@ -106,11 +118,6 @@ public class LoginActivity extends Activity {
 
                 }
             }
-
-
-
-        //}
-
     }
 
     public void ifExists(String idDB, String passDB) {
@@ -121,8 +128,10 @@ public class LoginActivity extends Activity {
         //System.out.println("from user"+passFromUser);
         if (BCrypt.checkpw(passFromUser, passFromDB)) {
             //ans = true;
-            Intent intent = new Intent(this, MainActivity.class);
+            Intent intent = new Intent(this, FeedActivity.class);
+            intent.putExtra("USER_ID", mEmailView.getText().toString());
             startActivity(intent);
+            finish();
         }
         else {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -140,14 +149,20 @@ public class LoginActivity extends Activity {
         }
     }
 
-
-   public void registration(View view)
+   public void registration_button(View view)
     {
-        //Intent intent = new Intent(this, SignUp.class);
-        //startActivity(intent);
+        Intent intent = new Intent(this, SignUpActivity.class);
+        startActivity(intent);
+        finish();
     }
 
+    @Override
+    protected void onDestroy() {
+        login_layout.setBackgroundResource(0);
+        System.gc();
+        super.onDestroy();
     }
+}
 
 
 

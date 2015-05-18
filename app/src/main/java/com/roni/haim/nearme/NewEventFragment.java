@@ -373,34 +373,34 @@ public class NewEventFragment extends Fragment {
             String color = "";
             switch (list.get(position)) {
                 case "Music":
-                    color = "#F22613";
+                    color = "#DF79C37D";
                     break;
                 case "Sport":
-                    color = "#26C281";
+                    color = "#DF61C7F2";
                     break;
                 case "Alcohol":
-                    color = "#22313F";
+                    color = "#DFBF5CA3";
                     break;
                 case "Animals":
-                    color = "#663399";
+                    color = "#DFEF575C";
                     break;
                 case "Art":
-                    color = "#F62459";
+                    color = "#DFFAB15B";
                     break;
                 case "Business":
-                    color = "#6C7A89";
+                    color = "#DFFCF06B";
                     break;
                 case "Cinema":
-                    color = "#F89406";
+                    color = "#DFC12026";
                     break;
                 case "Food":
-                    color = "#F9BF3B";
+                    color = "#DF00589C";
                     break;
                 case "Night Life":
-                    color = "#1F3A93";
+                    color = "#DF623894";
                     break;
                 case "Theater":
-                    color = "#4183D7";
+                    color = "#DFE68B24";
                     break;
                 default:
                     break;
@@ -424,34 +424,34 @@ public class NewEventFragment extends Fragment {
             String color = "";
             switch (list.get(position)) {
                 case "Music":
-                    color = "#F22613";
+                    color = "#DF79C37D";
                     break;
                 case "Sport":
-                    color = "#26C281";
+                    color = "#DF61C7F2";
                     break;
                 case "Alcohol":
-                    color = "#22313F";
+                    color = "#DFBF5CA3";
                     break;
                 case "Animals":
-                    color = "#663399";
+                    color = "#DFEF575C";
                     break;
                 case "Art":
-                    color = "#F62459";
+                    color = "#DFFAB15B";
                     break;
                 case "Business":
-                    color = "#6C7A89";
+                    color = "#DFFCF06B";
                     break;
                 case "Cinema":
-                    color = "#F89406";
+                    color = "#DFC12026";
                     break;
                 case "Food":
-                    color = "#F9BF3B";
+                    color = "#DF00589C";
                     break;
                 case "Night Life":
-                    color = "#1F3A93";
+                    color = "#DF623894";
                     break;
                 case "Theater":
-                    color = "#4183D7";
+                    color = "#DFE68B24";
                     break;
                 default:
                     break;

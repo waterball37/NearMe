@@ -243,7 +243,7 @@ public class MainActivity extends ActionBarActivity implements
                 convertView = LayoutInflater.from(getContext()).inflate(R.layout.feed_item,parent,false);
 
                 holder = new ViewHolder();
-                holder.eInterestColor = (TextView) convertView.findViewById(R.id.eInterestColor);
+                //holder.eInterestColor = (TextView) convertView.findViewById(R.id.eInterestColor);
                 holder.eImage = (ImageView) convertView.findViewById(R.id.eImage);
                 holder.eName = (TextView) convertView.findViewById(R.id.eName);
                 holder.eAddress = (TextView) convertView.findViewById(R.id.eAddress);
@@ -303,6 +303,7 @@ public class MainActivity extends ActionBarActivity implements
             holder.eInterestColor.setBackgroundColor(Color.parseColor(color));
             holder.eName.setText(params.get(1));
             holder.eAddress.setText(params.get(2));
+
             sdf = new SimpleDateFormat("yyyy-M-dd hh:mm:ss", Locale.US);
             date = null;
             try {

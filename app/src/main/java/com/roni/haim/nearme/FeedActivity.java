@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -33,6 +34,9 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.getbase.floatingactionbutton.FloatingActionButton;
+import com.getbase.floatingactionbutton.FloatingActionsMenu;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
@@ -86,7 +90,7 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
     private RelativeLayout layout;
     private ImageView blur;
 
-    private ImageButton newEvent;
+    //private ImageButton newEvent;
     private Fragment NewFragment;
     private FragmentTransaction FT;
 
@@ -122,6 +126,9 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
         else
             user = "haimomesi@gmail.com";
 
+        TextView logoLabel = (TextView)findViewById(R.id.logoLabel);
+        Typeface myTypeface = Typeface.createFromAsset(getAssets(), "lobster.otf");
+        logoLabel.setTypeface(myTypeface);
         feed = (ListView)findViewById(R.id.feed);
         //feed = (MyListView)findViewById(R.id.feed);
         markers = new HashMap<String,Marker>();
@@ -149,7 +156,45 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
             }
         });
 
-        newEvent = (ImageButton)findViewById(R.id.add_event);
+        final FloatingActionButton newEvent = (FloatingActionButton)findViewById(R.id.add_event);
+        newEvent.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (NewFragment == null || !NewFragment.isAdded()) {
+                    ((FloatingActionsMenu) findViewById(R.id.multiple_actions_down)).toggle();
+
+                    setBlurBool(false);
+                    if (!fragmentBlurApplied) {
+                        applyBlur();
+                        fragmentBlurApplied = true;
+                    }
+                    blur.setClickable(true);
+                    blur.setVisibility(View.VISIBLE);
+
+                    FT = getFragmentManager().beginTransaction();
+                    //FT.setCustomAnimations(R.animator.enter_anim, R.animator.exit_anim);
+
+                    NewFragment = new NewEventFragment();
+
+                    FT.add(R.id.new_event, NewFragment);
+                    FT.addToBackStack("NewFragment");
+                    FT.commit();
+
+                }
+            }
+        });
+
+        final FloatingActionButton logout = (FloatingActionButton)findViewById(R.id.logout);
+        logout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ((FloatingActionsMenu) findViewById(R.id.multiple_actions_down)).toggle();
+                startActivity(new Intent(getFeedClass(), LoginActivity.class));
+                finish();
+            }
+        });
+
+        /*
         newEvent.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -173,6 +218,7 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
                 }
             }
         });
+        */
 
         buildGoogleApiClient();
     }
@@ -451,39 +497,40 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
 
             switch (params.get(3)) {
                 case "Music":
-                    color = "#F22613";
+                    color = "#DF79C37D";
                     break;
                 case "Sport":
-                    color = "#26C281";
+                    color = "#DF61C7F2";
                     break;
                 case "Alcohol":
-                    color = "#22313F";
+                    color = "#DFBF5CA3";
                     break;
                 case "Animals":
-                    color = "#663399";
+                    color = "#DFEF575C";
                     break;
                 case "Art":
-                    color = "#F62459";
+                    color = "#DFFAB15B";
                     break;
                 case "Business":
-                    color = "#6C7A89";
+                    color = "#DFFCF06B";
                     break;
                 case "Cinema":
-                    color = "#F89406";
+                    color = "#DFC12026";
                     break;
                 case "Food":
-                    color = "#F9BF3B";
+                    color = "#DF00589C";
                     break;
                 case "Night Life":
-                    color = "#1F3A93";
+                    color = "#DF623894";
                     break;
                 case "Theater":
-                    color = "#4183D7";
+                    color = "#DFE68B24";
                     break;
                 default:
                     break;
             }
             holder.eInterestColor.setBackgroundColor(Color.parseColor(color));
+            //convertView.setBackgroundColor(Color.parseColor(color));
             holder.eName.setText(params.get(1));
             holder.eAddress.setText(params.get(2));
             sdf = new SimpleDateFormat("yyyy-M-dd hh:mm:ss");

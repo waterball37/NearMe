@@ -111,15 +111,7 @@ public class SettingsFragment extends Fragment {
                 interests_selected = ((MyCustomAdapter) interests.getAdapter()).getSelectedInterests();
                 if (interests_selected.equals("")) {
                     ans = false;
-                    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                    builder.setTitle("Please select at least one interest");
-                    builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            return;
-                        }
-                    });
-                    AlertDialog dialog = builder.create();
-                    dialog.show();
+                    ((FeedActivity) getActivity()).toast("Please select at least one interest");
                     buttonSaveSettings.setProgress(0);
                     buttonSaveSettings.setEnabled(true);
                     settings.setEnabled(true);

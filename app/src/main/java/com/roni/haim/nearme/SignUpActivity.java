@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -22,6 +23,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.dd.processbutton.iml.ActionProcessButton;
+import com.github.johnpersano.supertoasts.SuperToast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -118,15 +120,7 @@ public class SignUpActivity extends Activity {
                 if(interests_selected.equals(""))
                 {
                     ans =  false;
-                    AlertDialog.Builder builder = new AlertDialog.Builder(getSignUpClass());
-                    builder.setTitle("Please select at least one interest");
-                    builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            return;
-                        }
-                    });
-                    AlertDialog dialog = builder.create();
-                    dialog.show();
+                    toast("Please select at least one interest");
                 }
                 if(ans)
                     new DBHandler(user, "get_user", null, "getUser", getSignUpClass()).execute();
@@ -202,15 +196,23 @@ public class SignUpActivity extends Activity {
             buttonCreateAccount.setEnabled(true);
             sign_up_layout.setEnabled(true);
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("USER EXISTS");
-            builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                    return;
-                }
-            });
-            AlertDialog dialog = builder.create();
-            dialog.show();
+            toast("User already exists");
         }
+    }
+
+    public void toast(String text){
+        //Toast toast = Toast.makeText(this, text, Toast.LENGTH_SHORT);
+        //toast.show();
+        final SuperToast superToast = new SuperToast(this);
+        superToast.setDuration(SuperToast.Duration.VERY_SHORT);
+        superToast.setAnimations(SuperToast.Animations.FADE);
+        superToast.setBackground(SuperToast.Background.WHITE);
+        superToast.setTextSize(SuperToast.TextSize.LARGE);
+        superToast.setGravity(Gravity.CENTER, 0,0);
+        superToast.setTextColor(0xFF1E90FF);
+        superToast.setTypefaceStyle(Typeface.BOLD);
+        superToast.setText(text);
+        superToast.show();
     }
 
     public void setUser(JSONArray jsonArray) {
@@ -231,16 +233,7 @@ public class SignUpActivity extends Activity {
                     buttonCreateAccount.setProgress(0);
                     buttonCreateAccount.setEnabled(true);
                     sign_up_layout.setEnabled(true);
-                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                    builder.setTitle("COULDN'T CREATE AN ACCOUNT");
-                    builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            return;
-                        }
-                    });
-                    AlertDialog dialog = builder.create();
-                    dialog.show();
-
+                    toast("DB Error: Couldn't create account");
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -267,15 +260,7 @@ public class SignUpActivity extends Activity {
                     buttonCreateAccount.setProgress(0);
                     buttonCreateAccount.setEnabled(true);
                     sign_up_layout.setEnabled(true);
-                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                    builder.setTitle("COULDN'T SET SETTINGS");
-                    builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            return;
-                        }
-                    });
-                    AlertDialog dialog = builder.create();
-                    dialog.show();
+                    toast("DB Error: Couldn't set settings");
 
                 }
             } catch (JSONException e) {

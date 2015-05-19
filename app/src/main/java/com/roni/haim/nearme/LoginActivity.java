@@ -7,6 +7,7 @@ import android.graphics.Typeface;
 
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
@@ -21,6 +22,7 @@ import org.json.JSONObject;
 import android.content.DialogInterface;
 
 import com.dd.processbutton.iml.ActionProcessButton;
+import com.github.johnpersano.supertoasts.SuperToast;
 
 /**
  * A login screen that offers login via email/password.
@@ -120,20 +122,26 @@ import com.dd.processbutton.iml.ActionProcessButton;
 
     }
 
+    public void toast(String text){
+        //Toast toast = Toast.makeText(this, text, Toast.LENGTH_SHORT);
+        //toast.show();
+        final SuperToast superToast = new SuperToast(this);
+        superToast.setDuration(SuperToast.Duration.VERY_SHORT);
+        superToast.setAnimations(SuperToast.Animations.FADE);
+        superToast.setBackground(SuperToast.Background.WHITE);
+        superToast.setTextSize(SuperToast.TextSize.LARGE);
+        superToast.setGravity(Gravity.CENTER,0,0);
+        superToast.setTextColor(0xFF1E90FF);
+        superToast.setTypefaceStyle(Typeface.BOLD);
+        superToast.setText(text);
+        superToast.show();
+    }
 
     public void getUser(JSONArray jsonArray) {
         //mSignIn.setProgress(50);
         if(jsonArray == null)
         {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("USER DOES NOT EXIST");
-            builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                    return;
-                }
-            });
-            AlertDialog dialog = builder.create();
-            dialog.show();
+            toast("Username doesn't exist");
             mEmailView.setText("");
             mPasswordView.setText("");
             mEmailView.setEnabled(true);
@@ -178,16 +186,8 @@ import com.dd.processbutton.iml.ActionProcessButton;
         }
         else {
             mSignIn.setProgress(0);
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("WRONG PASSWORD");
-            builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                    return;
-                }
-            });
-            AlertDialog dialog = builder.create();
-            dialog.show();
-            mEmailView.setText("");
+            toast("Wrong password");
+            //mEmailView.setText("");
             mPasswordView.setText("");
             mEmailView.setEnabled(true);
             mPasswordView.setEnabled(true);

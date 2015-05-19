@@ -115,31 +115,15 @@ public class NewEventFragment extends Fragment {
                 }
                 if(interests.getSelectedItem() == null || interests.getSelectedItem().toString().equals("")) {
                     valid = false;
-                    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                    builder.setTitle("Interest is required");
-                    builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            return;
-                        }
-                    });
-                    AlertDialog dialog = builder.create();
-                    dialog.show();
+                    ((FeedActivity) getActivity()).toast("Interest is required");
                 }
                 if(add.getText().toString().equals("")) {
                     valid = false;
-                    add.setError("Event Name is required");
+                    add.setError("Event Address is required");
                 }
                 if(loc == null) {
                     valid = false;
-                    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                    builder.setTitle("Location is required");
-                    builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            return;
-                        }
-                    });
-                    AlertDialog dialog = builder.create();
-                    dialog.show();
+                    ((FeedActivity) getActivity()).toast("Location is required");
                 }
                 if(valid) {
                     Hashtable<String, String> params = new Hashtable<>();

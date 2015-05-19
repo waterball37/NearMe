@@ -28,6 +28,7 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.format.DateUtils;
 import android.util.Base64;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,6 +43,7 @@ import android.widget.Toast;
 import com.dd.processbutton.iml.ActionProcessButton;
 import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.getbase.floatingactionbutton.FloatingActionsMenu;
+import com.github.johnpersano.supertoasts.SuperToast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
@@ -67,6 +69,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
+import java.net.URLDecoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -415,7 +418,6 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
 
     }
 
-
     boolean haveNetworkConnection() {
         boolean haveConnectedWifi = false;
         boolean haveConnectedMobile = false;
@@ -650,8 +652,18 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
     }
 
     public void toast(String text){
-        Toast toast = Toast.makeText(this, text, Toast.LENGTH_SHORT);
-        toast.show();
+        //Toast toast = Toast.makeText(this, text, Toast.LENGTH_SHORT);
+        //toast.show();
+        final SuperToast superToast = new SuperToast(this);
+        superToast.setDuration(SuperToast.Duration.VERY_SHORT);
+        superToast.setAnimations(SuperToast.Animations.FADE);
+        superToast.setBackground(SuperToast.Background.WHITE);
+        superToast.setTextSize(SuperToast.TextSize.LARGE);
+        superToast.setGravity(Gravity.CENTER, 0, 0);
+        superToast.setTextColor(0xFF1E90FF);
+        superToast.setTypefaceStyle(Typeface.BOLD);
+        superToast.setText(text);
+        superToast.show();
     }
 
     public void applyBlur()

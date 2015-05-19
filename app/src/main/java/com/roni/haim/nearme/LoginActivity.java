@@ -5,11 +5,13 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Typeface;
 
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -30,10 +32,13 @@ public class LoginActivity extends Activity {
     private EditText mPasswordView;
     private String email;
     private String password;
+    private ImageView emailIcon;
+    private ImageView passIcon;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        System.gc();
         setContentView(R.layout.activity_login);
         login_layout = (LinearLayout) findViewById(R.id.login_layout);
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
@@ -41,12 +46,35 @@ public class LoginActivity extends Activity {
         TextView mLogoLabel = (TextView) findViewById(R.id.logoLabel);
         Button mSignIn = (Button) findViewById(R.id.email_sign_in_button);
         TextView mSignUp = (TextView) findViewById(R.id.signUp);
+        emailIcon = (ImageView) findViewById(R.id.emailIcon);
+        passIcon = (ImageView) findViewById(R.id.passIcon);
         Typeface mTypeface = Typeface.createFromAsset(getAssets(), "lobster.otf");
         mSignUp.setTypeface(mTypeface);
         mSignIn.setTypeface(mTypeface);
         mLogoLabel.setTypeface(mTypeface);
         mPasswordView.setTypeface(mTypeface);
         mEmailView.setTypeface(mTypeface);
+    }
+
+    @Override
+    protected void onDestroy() {
+        stripImageView(emailIcon);
+        stripImageView(passIcon);
+        login_layout.setBackgroundResource(0);
+        login_layout = null;
+        System.gc();
+        super.onDestroy();
+    }
+
+    public static void stripImageView(ImageView view) {
+        if ( view.getDrawable() instanceof BitmapDrawable) {
+            ((BitmapDrawable)view.getDrawable()).getBitmap().recycle();
+        }
+        view.getDrawable().setCallback(null);
+        view.setImageDrawable(null);
+        view.getResources().flushLayoutCache();
+        view.destroyDrawingCache();
+        view.setBackgroundResource(0);
     }
 
     public void sign_in(View view) {
@@ -133,12 +161,6 @@ public class LoginActivity extends Activity {
         finish();
     }
 
-    @Override
-    protected void onDestroy() {
-        login_layout.setBackgroundResource(0);
-        System.gc();
-        super.onDestroy();
-    }
 }
 
 

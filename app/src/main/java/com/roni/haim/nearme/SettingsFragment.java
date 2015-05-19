@@ -18,6 +18,8 @@ import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import org.w3c.dom.Text;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Hashtable;
@@ -31,6 +33,7 @@ public class SettingsFragment extends Fragment {
     private TextView radius;
     private String interests_selected;
     private Spinner interests;
+    private TextView settingsLbl;
 
     public SettingsFragment() {
         // Required empty public constructor
@@ -43,20 +46,27 @@ public class SettingsFragment extends Fragment {
         // Inflate the layout for this fragment
         View frag = inflater.inflate(R.layout.fragment_settings, container, false);
 
-        TextView interestsLabel = (TextView) frag.findViewById(R.id.interestsLabel);
-        TextView radiusLabel = (TextView) frag.findViewById(R.id.radiusLabel);
+
+
+        final TextView interestsLabel = (TextView) frag.findViewById(R.id.interestsLabel);
+        final TextView radiusLabel = (TextView) frag.findViewById(R.id.radiusLabel);
         SeekBar radiusSeekBar = (SeekBar) frag.findViewById(R.id.radiusSeekBar);
         radius = (TextView) frag.findViewById(R.id.radius);
         interests = (Spinner) frag.findViewById(R.id.interests);
-        Button buttonSaveSettings = (Button) frag.findViewById(R.id.buttonSaveSettings);
+        settingsLbl = (TextView) frag.findViewById(R.id.settingsLbl);
+        final Button buttonSaveSettings = (Button) frag.findViewById(R.id.buttonSaveSettings);
 
+        final Typeface mTypeface = Typeface.createFromAsset(getActivity().getAssets(), "lobster.otf");
 
-        Typeface mTypeface = Typeface.createFromAsset(getActivity().getAssets(), "lobster.otf");
-
-        interestsLabel.setTypeface(mTypeface);
-        radiusLabel.setTypeface(mTypeface);
-        radius.setTypeface(mTypeface);
-        buttonSaveSettings.setTypeface(mTypeface);
+        getActivity().runOnUiThread(new Runnable() {
+            public void run() {
+                interestsLabel.setTypeface(mTypeface);
+                radiusLabel.setTypeface(mTypeface);
+                radius.setTypeface(mTypeface);
+                settingsLbl.setTypeface(mTypeface);
+                buttonSaveSettings.setTypeface(mTypeface);
+            }
+        });
 
         int progressDB = ((FeedActivity) getActivity()).getUserRadius();
         radius.setText(String.valueOf(progressDB));

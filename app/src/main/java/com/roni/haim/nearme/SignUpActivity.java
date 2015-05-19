@@ -51,6 +51,7 @@ public class SignUpActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        System.gc();
         setContentView(R.layout.activity_sign_up);
         userFullName = (EditText)findViewById(R.id.editTextFullName);
         userID = (EditText)findViewById(R.id.editTextUserName);

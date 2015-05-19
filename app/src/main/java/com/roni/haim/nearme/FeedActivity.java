@@ -106,11 +106,54 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
 
     @Override
     protected void onDestroy() {
-        mMap.clear();
+
         markers.clear();
+        markers = null;
         events.clear();
+        events = null;
+        feed = null;
+
+        mGoogleApiClient = null;
+        mLastLocation = null;
+        user = null;
+        mMap.clear();
+        mMap = null;
+
+        if(blurImage != null && !blurImage.isRecycled()) {
+            blurImage.recycle();
+            blurImage = null;
+        }
+
+        loadingViewAnim.setCallback(null);
+        loadingViewAnim = null;
+        stripImageView(loadingIcon);
+        loadingIcon = null;
+        blur = null;
+
+        loadingLayout.setBackgroundResource(0);
+        loadingLayout = null;
+
+        layout.setBackgroundResource(0);
+        layout = null;
+
+        //private ImageButton newEvent;
+        NewFragment = null;
+        SettingsFragment = null;
+        FragmentTransaction FT = null;
+
         System.gc();
         super.onDestroy();
+    }
+
+    public static void stripImageView(ImageView view) {
+        if ( view.getDrawable() instanceof BitmapDrawable) {
+            ((BitmapDrawable)view.getDrawable()).getBitmap().recycle();
+        }
+        view.getDrawable().setCallback(null);
+        view.setImageDrawable(null);
+        view.getResources().flushLayoutCache();
+        view.destroyDrawingCache();
+        view.setBackgroundResource(0);
     }
 
     @Override
@@ -145,13 +188,25 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
         layout = (RelativeLayout)findViewById(R.id.layout);
         blur = (ImageView)findViewById(R.id.blur);
 
+        /*
+        blur.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(getFragmentManager().getBackStackEntryCount() > 0) {
+                    getFragmentManager().popBackStack();
+                    fragmentBlurApplied = false;
+                    stopSpinner();
+                }
+            }
+        });
+        */
+
         SwipeRefreshLayout mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.refresh_layout);
 
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                finish();
-                startActivity(getIntent());
+                recreate();
             }
         });
 
@@ -180,7 +235,6 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
                     FT.add(R.id.new_event, NewFragment);
                     FT.addToBackStack("NewFragment");
                     FT.commit();
-
                 }
             }
         });
@@ -268,13 +322,13 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
                 String result = json.getString("result");
                 if( result.equals("success") )
                 {
-                    toast("Settings saved succesfully");
-                    stopSpinner();
-                    finish();
-                    startActivity(getIntent());
+                    if(getFragmentManager().getBackStackEntryCount() > 0)
+                        getFragmentManager().popBackStack();
+
+                    recreate();
                 }
                 else
-                    System.out.println("error");
+                    toast("Settings were not saved");
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -319,10 +373,10 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
                 String result = json.getString("result");
                 if( result.equals("success") )
                 {
-                    toast("Event added succesfully");
-                    stopSpinner();
-                    finish();
-                    startActivity(getIntent());
+                    if(getFragmentManager().getBackStackEntryCount() > 0)
+                        getFragmentManager().popBackStack();
+
+                    recreate();
                 }
                 else
                     System.out.println("error");
@@ -393,34 +447,34 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
                     switch (json.getString("interests"))
                     {
                         case "Music":
-                            assetName=R.drawable.red_marker;
+                            assetName=R.drawable.music;
                             break;
                         case "Sport":
-                            assetName=R.drawable.green_marker;
+                            assetName=R.drawable.sport;
                             break;
                         case "Alcohol":
-                            assetName=R.drawable.dark_marker;
+                            assetName=R.drawable.alcohol;
                             break;
                         case "Animals":
-                            assetName=R.drawable.purple_marker;
+                            assetName=R.drawable.animals;
                             break;
                         case "Art":
-                            assetName=R.drawable.pink_marker;
+                            assetName=R.drawable.art;
                             break;
                         case "Business":
-                            assetName=R.drawable.grey_marker;
+                            assetName=R.drawable.business;
                             break;
                         case "Cinema":
-                            assetName=R.drawable.orange_marker;
+                            assetName=R.drawable.cinema;
                             break;
                         case "Food":
-                            assetName=R.drawable.yellow_marker;
+                            assetName=R.drawable.food;
                             break;
                         case "Night Life":
-                            assetName=R.drawable.dark_blue_marker;
+                            assetName=R.drawable.night_life;
                             break;
                         case "Theater":
-                            assetName=R.drawable.blue_marker;
+                            assetName=R.drawable.theater;
                             break;
                         default:
                             break;
@@ -626,12 +680,16 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
 
     public void applyBlur()
     {
-        layout.setDrawingCacheEnabled(true);
-        layout.buildDrawingCache();
-        blurImage = BlurImage(layout.getDrawingCache());
-        layout.setDrawingCacheEnabled(false);
-        blur.setImageBitmap(blurImage);
-        blurApplied = true;
+        runOnUiThread(new  Runnable() {
+            public  void  run() {
+                layout.setDrawingCacheEnabled(true);
+                layout.buildDrawingCache();
+                blurImage = BlurImage(layout.getDrawingCache());
+                layout.setDrawingCacheEnabled(false);
+                blur.setImageBitmap(blurImage);
+                blurApplied = true;
+            }
+        });
     }
 
     public void startSpinner()
@@ -643,7 +701,7 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
             applyBlur();
 
             feed.setVisibility(View.INVISIBLE);
-            blur.setClickable(true);
+            //blur.setClickable(true);
             blur.setVisibility(View.VISIBLE);
 
             loadingLayout.setVisibility(View.VISIBLE);
@@ -662,18 +720,22 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
 
     void stopSpinner()
     {
-        blur.setVisibility(View.GONE);
-        blur.setClickable(false);
-        blur.setImageDrawable(null);
-        if(blurImage != null && !blurImage.isRecycled()) {
-            blurImage.recycle();
-            blurImage = null;
-        }
-        System.gc();
-        spinnerStarted = false;
-        loadingLayout.setVisibility(View.GONE);
-        loadingIcon.setVisibility(View.GONE);
-        loadingViewAnim.stop();
+        runOnUiThread(new Runnable() {
+            public void run() {
+                blur.setVisibility(View.GONE);
+                //blur.setClickable(false);
+                blur.setImageDrawable(null);
+                if (blurImage != null && !blurImage.isRecycled()) {
+                    blurImage.recycle();
+                    blurImage = null;
+                }
+                System.gc();
+                spinnerStarted = false;
+                loadingLayout.setVisibility(View.GONE);
+                loadingIcon.setVisibility(View.GONE);
+                loadingViewAnim.stop();
+            }
+        });
     }
 
     void decrementComponentsProcessed()

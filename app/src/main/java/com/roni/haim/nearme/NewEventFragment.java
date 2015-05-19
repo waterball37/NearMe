@@ -1,6 +1,8 @@
 package com.roni.haim.nearme;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -28,6 +30,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.dd.processbutton.iml.ActionProcessButton;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.File;
@@ -54,6 +57,7 @@ public class NewEventFragment extends Fragment {
     private View frag;
     private ImageButton addImageCamera;
     private ImageButton addImageGallery;
+    private ActionProcessButton post;
 
 
     @Override
@@ -90,7 +94,72 @@ public class NewEventFragment extends Fragment {
         addImageCamera = (ImageButton)frag.findViewById(R.id.add_image_camera);
         addImageGallery = (ImageButton)frag.findViewById(R.id.add_image_gallery);
         deleteImage = (ImageButton)frag.findViewById(R.id.image_delete);
-        Button post = (Button)frag.findViewById(R.id.post);
+
+        post = (ActionProcessButton)frag.findViewById(R.id.post);
+
+        post.setMode(ActionProcessButton.Mode.ENDLESS);
+
+        post.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                boolean valid = true;
+                name.setError(null);
+                add.setError(null);
+                post.setProgress(1);
+                post.setEnabled(false);
+                new_event_layout.setEnabled(false);
+                LatLng loc = ((FeedActivity) getActivity()).getLatLng();
+                if(name.getText().toString().equals("") || name.getText().toString().equals("Event Name Here")) {
+                    valid = false;
+                    name.setError("Event Name is required");
+                }
+                if(interests.getSelectedItem() == null || interests.getSelectedItem().toString().equals("")) {
+                    valid = false;
+                    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                    builder.setTitle("Interest is required");
+                    builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            return;
+                        }
+                    });
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                }
+                if(add.getText().toString().equals("")) {
+                    valid = false;
+                    add.setError("Event Name is required");
+                }
+                if(loc == null) {
+                    valid = false;
+                    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                    builder.setTitle("Location is required");
+                    builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            return;
+                        }
+                    });
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                }
+                if(valid) {
+                    Hashtable<String, String> params = new Hashtable<>();
+                    params.put("name", name.getText().toString());
+                    params.put("interests", interests.getSelectedItem().toString());
+                    params.put("address", add.getText().toString());
+                    params.put("lat", String.valueOf(loc.latitude));
+                    params.put("lng", String.valueOf(loc.longitude));
+                    ((FeedActivity) getActivity()).setSpinner();
+                    new DBHandler("dummyUser", "set_event", params, "setEvent", ((FeedActivity) getActivity()).getFeedClass()).execute();
+                }
+                else
+                {
+                    post.setProgress(0);
+                    post.setEnabled(true);
+                    new_event_layout.setEnabled(true);
+                }
+            }
+        });
+
 
         LatLng loc = ((FeedActivity) getActivity()).getLatLng();
         String address="";
@@ -133,27 +202,6 @@ public class NewEventFragment extends Fragment {
         name.setTypeface(myTypeface);
         newEventLabel.setTypeface(myTypeface);
         imageLabel.setTypeface(myTypeface);
-
-        name.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                name.setText("");
-            }
-        });
-
-        post.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                LatLng loc = ((FeedActivity) getActivity()).getLatLng();
-                Hashtable<String,String> params = new Hashtable<>();
-                params.put("name",name.getText().toString());
-                params.put("interests",interests.getSelectedItem().toString());
-                params.put("address", add.getText().toString());
-                params.put("lat", String.valueOf(loc.latitude));
-                params.put("lng",String.valueOf(loc.longitude));
-                new DBHandler("dummyUser","set_event",params,"setEvent",((FeedActivity) getActivity()).getFeedClass()).execute();
-            }
-        });
 
         addImageCamera.setOnClickListener(new View.OnClickListener() {
             @Override

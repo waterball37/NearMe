@@ -1,5 +1,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools" android:layout_width="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:padding="15dp"
     tools:context="com.roni.haim.nearme.SettingsFragment">
@@ -100,6 +102,7 @@
             android:layout_below="@+id/radiusLabel"
             />
 
+        <!--
         <Button
             android:id="@+id/buttonSaveSettings"
             android:layout_width="fill_parent"
@@ -115,6 +118,28 @@
             android:layout_below="@id/radiusSeekBar"
             android:textColor="@color/white"
             />
+            -->
+
+        <com.dd.processbutton.iml.ActionProcessButton
+            android:id="@+id/buttonSaveSettings" style="?android:textAppearanceSmall"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Save Settings"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:textStyle="bold"
+            android:textSize="20sp"
+            android:layout_marginTop="5dp"
+            android:background="@drawable/rounded_corners_button"
+            android:textAllCaps="false"
+            android:layout_below="@id/radiusSeekBar"
+            android:textColor="@color/white"
+            custom:pb_colorComplete="#CF2467D7"
+            custom:pb_colorNormal="#CFFA7F5A"
+            custom:pb_colorPressed="#CFFA7F5A"
+            custom:pb_colorProgress="#CFFA7F5A"
+            custom:pb_textComplete="Done"
+            custom:pb_textProgress="Saving Changes..." />
 
         </RelativeLayout>
 

@@ -18,6 +18,8 @@ import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import com.dd.processbutton.iml.ActionProcessButton;
+
 import org.w3c.dom.Text;
 
 import java.util.ArrayList;
@@ -34,6 +36,8 @@ public class SettingsFragment extends Fragment {
     private String interests_selected;
     private Spinner interests;
     private TextView settingsLbl;
+    private ActionProcessButton buttonSaveSettings;
+    private RelativeLayout settings;
 
     public SettingsFragment() {
         // Required empty public constructor
@@ -54,8 +58,9 @@ public class SettingsFragment extends Fragment {
         radius = (TextView) frag.findViewById(R.id.radius);
         interests = (Spinner) frag.findViewById(R.id.interests);
         settingsLbl = (TextView) frag.findViewById(R.id.settingsLbl);
-        final Button buttonSaveSettings = (Button) frag.findViewById(R.id.buttonSaveSettings);
-
+        buttonSaveSettings = (ActionProcessButton) frag.findViewById(R.id.buttonSaveSettings);
+        buttonSaveSettings.setMode(ActionProcessButton.Mode.ENDLESS);
+        settings = (RelativeLayout)  frag.findViewById(R.id.settings);
         final Typeface mTypeface = Typeface.createFromAsset(getActivity().getAssets(), "lobster.otf");
 
         getActivity().runOnUiThread(new Runnable() {
@@ -100,6 +105,9 @@ public class SettingsFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 boolean ans = true;
+                buttonSaveSettings.setProgress(1);
+                buttonSaveSettings.setEnabled(false);
+                settings.setEnabled(false);
                 interests_selected = ((MyCustomAdapter) interests.getAdapter()).getSelectedInterests();
                 if (interests_selected.equals("")) {
                     ans = false;
@@ -112,11 +120,15 @@ public class SettingsFragment extends Fragment {
                     });
                     AlertDialog dialog = builder.create();
                     dialog.show();
+                    buttonSaveSettings.setProgress(0);
+                    buttonSaveSettings.setEnabled(true);
+                    settings.setEnabled(true);
                 }
                 if (ans) {
                     Hashtable<String, String> params = new Hashtable<>();
                     params.put("interests", interests_selected);
                     params.put("radius", radius.getText().toString());
+                    ((FeedActivity) getActivity()).setSpinner();
                     new DBHandler(((FeedActivity) getActivity()).getUser(), "set_user_settings", params, "setUserSettings", ((FeedActivity) getActivity()).getFeedClass()).execute();
                 }
             }

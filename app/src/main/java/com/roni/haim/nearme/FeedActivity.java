@@ -1,10 +1,13 @@
 package com.roni.haim.nearme;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -14,6 +17,8 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.NetworkRequest;
+import android.net.wifi.WifiManager;
 import android.renderscript.Allocation;
 import android.renderscript.Element;
 import android.renderscript.RenderScript;
@@ -27,18 +32,27 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import com.dd.processbutton.iml.ActionProcessButton;
 import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.getbase.floatingactionbutton.FloatingActionsMenu;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStates;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
@@ -49,11 +63,9 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.ByteArrayOutputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -66,34 +78,30 @@ import java.util.Hashtable;
 public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleApiClient.ConnectionCallbacks,GoogleApiClient.OnConnectionFailedListener  {
 
     private GoogleApiClient mGoogleApiClient;
-    private Location mLastLocation;
-    private String user;
-    private int userRadius;
     private GoogleMap mMap;
-    private ListView feed;
-    //private MyListView feed;
+    private Location mLastLocation;
     private HashMap<String,Marker> markers;
     private ArrayList<ArrayList<String>> events;
-
+    private String user;
+    private String userInterests;
+    private int userRadius;
+    private int componentsProcessed = 0;
+    private ListView feed;
     private boolean blurApplied = false;
     private boolean fragmentBlurApplied = false;
-    private Bitmap blurImage;
-
     private boolean spinnerStarted = false;
-    private int componentsProcessed = 0;
-
+    private Bitmap blurImage;
     private AnimationDrawable loadingViewAnim=null;
     private ImageView loadingIcon = null;
-    private LinearLayout loadingLayout = null;
-
-    private RelativeLayout layout;
     private ImageView blur;
-    private String userInterests;
-
-    //private ImageButton newEvent;
+    private LinearLayout loadingLayout = null;
+    private RelativeLayout layout;
     private Fragment NewFragment;
     private Fragment SettingsFragment;
     private FragmentTransaction FT;
+    private FloatingActionButton settings;
+    private FloatingActionButton logout;
+    private FloatingActionButton newEvent;
 
     static class ViewHolder {
         TextView eInterestColor;
@@ -116,8 +124,10 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
         mGoogleApiClient = null;
         mLastLocation = null;
         user = null;
-        mMap.clear();
-        mMap = null;
+        if(mMap != null) {
+            mMap.clear();
+            mMap = null;
+        }
 
         if(blurImage != null && !blurImage.isRecycled()) {
             blurImage.recycle();
@@ -136,7 +146,6 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
         layout.setBackgroundResource(0);
         layout = null;
 
-        //private ImageButton newEvent;
         NewFragment = null;
         SettingsFragment = null;
         FragmentTransaction FT = null;
@@ -172,34 +181,17 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
         Typeface myTypeface = Typeface.createFromAsset(getAssets(), "lobster.otf");
         logoLabel.setTypeface(myTypeface);
         feed = (ListView)findViewById(R.id.feed);
-        //feed = (MyListView)findViewById(R.id.feed);
         markers = new HashMap<>();
         events = new ArrayList<>();
 
         loadingLayout = (LinearLayout)findViewById(R.id.spinnerContainer);
         loadingLayout.setVisibility(View.GONE);
-
         loadingIcon = (ImageView) findViewById(R.id.spinner);
         loadingIcon.setVisibility(View.GONE);
-
         loadingIcon.setBackgroundResource(R.drawable.loading_animation);
         loadingViewAnim = (AnimationDrawable) loadingIcon.getBackground();
-
         layout = (RelativeLayout)findViewById(R.id.layout);
         blur = (ImageView)findViewById(R.id.blur);
-
-        /*
-        blur.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(getFragmentManager().getBackStackEntryCount() > 0) {
-                    getFragmentManager().popBackStack();
-                    fragmentBlurApplied = false;
-                    stopSpinner();
-                }
-            }
-        });
-        */
 
         SwipeRefreshLayout mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.refresh_layout);
 
@@ -210,7 +202,7 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
             }
         });
 
-        final FloatingActionButton newEvent = (FloatingActionButton)findViewById(R.id.add_event);
+        newEvent = (FloatingActionButton)findViewById(R.id.add_event);
         newEvent.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -239,7 +231,7 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
             }
         });
 
-        final FloatingActionButton logout = (FloatingActionButton)findViewById(R.id.logout);
+        logout = (FloatingActionButton)findViewById(R.id.logout);
         logout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -249,15 +241,14 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
             }
         });
 
-        final FloatingActionButton settings = (FloatingActionButton)findViewById(R.id.settings);
+        settings = (FloatingActionButton)findViewById(R.id.settings);
         settings.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(NewFragment != null && NewFragment.isAdded())
-                {
+                if (NewFragment != null && NewFragment.isAdded()) {
                     getFragmentManager().popBackStack();
                 }
-                if ( SettingsFragment == null || !SettingsFragment.isAdded() ) {
+                if (SettingsFragment == null || !SettingsFragment.isAdded()) {
                     ((FloatingActionsMenu) findViewById(R.id.multiple_actions_down)).toggle();
 
                     setBlurBool();
@@ -282,75 +273,6 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
         buildGoogleApiClient();
     }
 
-    public void setEvent(JSONArray jsonArray)
-    {
-        for(int i=0; i<jsonArray.length();i++){
-            JSONObject json = null;
-            try {
-                json = jsonArray.getJSONObject(i);
-                String result = json.getString("result");
-                if( result.equals("success") )
-                {
-                    ImageView image = (ImageView)NewFragment.getView().findViewById(R.id.image);
-                    if(image.getDrawable() != null) {
-                        Bitmap bitmap = ((BitmapDrawable) image.getDrawable()).getBitmap();
-                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
-                        Hashtable<String, String> params = new Hashtable<>();
-                        params.put("ID", json.getString("ID"));
-                        params.put("image", Base64.encodeToString(stream.toByteArray(), Base64.DEFAULT));
-                        image.destroyDrawingCache();
-                        bitmap.recycle();
-                        new DBHandler("dummyUser", "set_image", params, "setImage", this).execute();
-                    }
-                }
-                else
-                    System.out.println("error");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-
-    }
-
-    public void setUserSettings(JSONArray jsonArray)
-    {
-        for(int i=0; i<jsonArray.length();i++){
-            JSONObject json = null;
-            try {
-                json = jsonArray.getJSONObject(i);
-                String result = json.getString("result");
-                if( result.equals("success") )
-                {
-                    if(getFragmentManager().getBackStackEntryCount() > 0)
-                        getFragmentManager().popBackStack();
-
-                    recreate();
-                }
-                else
-                    toast("Settings were not saved");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-
-    }
-
-    public String getUserInterests()
-    {
-        return userInterests;
-    }
-
-    public String getUser()
-    {
-        return user;
-    }
-
-    public int getUserRadius()
-    {
-        return userRadius;
-    }
-
     @Override
     public void onBackPressed() {
         int count = getFragmentManager().getBackStackEntryCount();
@@ -364,50 +286,135 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
         }
     }
 
-    public void setImage(JSONArray jsonArray)
-    {
-        for(int i=0; i<jsonArray.length();i++){
-            JSONObject json = null;
-            try {
-                json = jsonArray.getJSONObject(i);
-                String result = json.getString("result");
-                if( result.equals("success") )
-                {
-                    if(getFragmentManager().getBackStackEntryCount() > 0)
-                        getFragmentManager().popBackStack();
-
-                    recreate();
-                }
-                else
-                    System.out.println("error");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
     @Override
     public void onMapReady(final GoogleMap map) {
         mMap = map;
         mMap.setIndoorEnabled(true);
-        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
-            if(haveNetworkConnection()) {
-                if (mLastLocation != null) {
-                    LatLng mLocation = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
-                    this.mMap.setMyLocationEnabled(true);
-                    this.mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mLocation, 13));
-                }
-                loadingIcon.post(new Starter());
-            }
-            else
-                toast("No internet connection");
+        if (mLastLocation != null) {
+            LatLng mLocation = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
+            this.mMap.setMyLocationEnabled(true);
+            this.mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mLocation, 13));
         }
-        else
-        {
-            toast("Location services is off");
+        loadingIcon.post(new Starter());
+    }
+
+    synchronized void buildGoogleApiClient() {
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+    }
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mGoogleApiClient.connect();
+        Log.e("Connected?", String.valueOf(mGoogleApiClient.isConnected()));
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        LocationRequest locationRequest = LocationRequest.create();
+        locationRequest.setPriority(locationRequest.PRIORITY_HIGH_ACCURACY);
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(locationRequest);
+        PendingResult<LocationSettingsResult> result =
+                LocationServices.SettingsApi.checkLocationSettings(mGoogleApiClient, builder.build());
+        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
+            @Override
+            public void onResult(LocationSettingsResult result) {
+                final Status status = result.getStatus();
+                final LocationSettingsStates locationSettingsStates = result.getLocationSettingsStates();
+
+                switch (status.getStatusCode()) {
+                    case LocationSettingsStatusCodes.SUCCESS:
+
+                        if (!haveNetworkConnection()) {
+                            WifiManager wifiManager = (WifiManager) getFeedClass()
+                                    .getSystemService(Context.WIFI_SERVICE);
+
+                            if(!wifiManager.isWifiEnabled())
+                                wifiManager.setWifiEnabled(true);
+                        }
+
+                        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+                        MapFragment mapFragment = (MapFragment) getFragmentManager()
+                                .findFragmentById(R.id.map);
+                        mapFragment.getMapAsync(getFeedClass());
+
+                        break;
+                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                        // Location settings are not satisfied. But could be fixed by showing the user
+                        // a dialog.
+
+                        try {
+                            // Show the dialog by calling startResolutionForResult(),
+                            // and check the result in onActivityResult().
+
+                            status.startResolutionForResult(
+                                    getFeedClass(),
+                                    37);
+                        } catch (IntentSender.SendIntentException e) {
+                            // Ignore the error.
+                        }
+
+                        break;
+                    case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                        // Location settings are not satisfied. However, we have no way to fix the
+                        // settings so we won't show the dialog.
+                        toast("QUITTING");
+                        finish();
+                        break;
+                }
+            }
+        });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        //final LocationSettingsStates states = LocationSettingsStates.fromIntent(intent);
+        switch (requestCode) {
+            case 37:
+                switch (resultCode) {
+                    case Activity.RESULT_OK:
+                        // All required changes were successfully made
+
+                        if (!haveNetworkConnection()) {
+                            WifiManager wifiManager = (WifiManager) getFeedClass()
+                                    .getSystemService(Context.WIFI_SERVICE);
+                            if(!wifiManager.isWifiEnabled())
+                                wifiManager.setWifiEnabled(true);
+                        }
+
+                        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+                        MapFragment mapFragment = (MapFragment) getFragmentManager()
+                                .findFragmentById(R.id.map);
+                        mapFragment.getMapAsync(getFeedClass());
+
+
+                        break;
+                    case Activity.RESULT_CANCELED:
+                        // The user was asked to change settings, but chose not to
+                        toast("QUITTING");
+                        finish();
+                        break;
+                    default:
+                        break;
+                }
+                break;
         }
     }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+
+    }
+
 
     boolean haveNetworkConnection() {
         boolean haveConnectedWifi = false;
@@ -426,9 +433,155 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
         return haveConnectedWifi || haveConnectedMobile;
     }
 
-    public LatLng getLatLng()
+    public void setEvent(JSONArray jsonArray)
     {
-        return new LatLng(mLastLocation.getLatitude(),mLastLocation.getLongitude());
+        for(int i=0; i<jsonArray.length();i++){
+            JSONObject json = null;
+            try {
+                json = jsonArray.getJSONObject(i);
+                String result = json.getString("result");
+                ActionProcessButton post = (ActionProcessButton)NewFragment.getView().findViewById(R.id.post);
+                FrameLayout new_event_layout = (FrameLayout)NewFragment.getView().findViewById(R.id.new_event_layout);
+                if( result.equals("success") )
+                {
+                    ImageView image = (ImageView)NewFragment.getView().findViewById(R.id.image);
+                    if(image.getDrawable() != null) {
+                        Bitmap bitmap = ((BitmapDrawable) image.getDrawable()).getBitmap();
+                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+                        Hashtable<String, String> params = new Hashtable<>();
+                        params.put("ID", json.getString("ID"));
+                        params.put("image", Base64.encodeToString(stream.toByteArray(), Base64.DEFAULT));
+                        image.destroyDrawingCache();
+                        bitmap.recycle();
+                        spinnerStarted = true;
+                        new DBHandler("dummyUser", "set_image", params, "setImage", this).execute();
+                    }
+                    else
+                    {
+                        post.setProgress(100);
+                        post.setEnabled(true);
+                        if(getFragmentManager().getBackStackEntryCount() > 0)
+                            getFragmentManager().popBackStack();
+
+                        recreate();
+                    }
+                }
+                else
+                {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    builder.setTitle("DB error: Event was not added");
+                    builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            return;
+                        }
+                    });
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                    post.setProgress(0);
+                    post.setEnabled(true);
+                    new_event_layout.setEnabled(true);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+    public void setUserSettings(JSONArray jsonArray)
+    {
+        for(int i=0; i<jsonArray.length();i++){
+            JSONObject json = null;
+            try {
+                json = jsonArray.getJSONObject(i);
+                String result = json.getString("result");
+                ActionProcessButton buttonSaveSettings = (ActionProcessButton) SettingsFragment.getView().findViewById(R.id.buttonSaveSettings);
+                RelativeLayout settings = (RelativeLayout)SettingsFragment.getView().findViewById(R.id.settings);
+                if( result.equals("success") )
+                {
+                    buttonSaveSettings.setProgress(100);
+                    buttonSaveSettings.setEnabled(true);
+                    if(getFragmentManager().getBackStackEntryCount() > 0)
+                        getFragmentManager().popBackStack();
+
+                    recreate();
+                }
+                else
+                {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    builder.setTitle("DB error: Settings not saved");
+                    builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            return;
+                        }
+                    });
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                    buttonSaveSettings.setProgress(0);
+                    buttonSaveSettings.setEnabled(true);
+                    settings.setEnabled(true);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+    public void setImage(JSONArray jsonArray)
+    {
+        for(int i=0; i<jsonArray.length();i++){
+            JSONObject json = null;
+            try {
+                ActionProcessButton post = (ActionProcessButton)NewFragment.getView().findViewById(R.id.post);
+                FrameLayout new_event_layout = (FrameLayout)NewFragment.getView().findViewById(R.id.new_event_layout);
+                json = jsonArray.getJSONObject(i);
+                String result = json.getString("result");
+                if( result.equals("success") )
+                {
+                    post.setProgress(100);
+                    post.setEnabled(true);
+                    if(getFragmentManager().getBackStackEntryCount() > 0)
+                        getFragmentManager().popBackStack();
+
+                    recreate();
+                }
+                else
+                {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    builder.setTitle("Server error: Image was not added");
+                    builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            return;
+                        }
+                    });
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                    post.setProgress(0);
+                    post.setEnabled(true);
+                    new_event_layout.setEnabled(true);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void getUserSettings(JSONArray jsonArray)
+    {
+        for(int i=0; i<jsonArray.length();i++){
+            JSONObject json = null;
+            try {
+                json = jsonArray.getJSONObject(i);
+                userRadius = json.getInt("radius");
+                userInterests = json.getString("interests");
+                new DBHandler(this.user,"get_user_feed",null,"getUserFeed",this).execute();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        decrementComponentsProcessed();
     }
 
     public void getUserFeed(JSONArray jsonArray)
@@ -496,59 +649,144 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
         decrementComponentsProcessed();
     }
 
-    public void getUserSettings(JSONArray jsonArray)
-    {
-        for(int i=0; i<jsonArray.length();i++){
-            JSONObject json = null;
-            try {
-                json = jsonArray.getJSONObject(i);
-                userRadius = json.getInt("radius");
-                userInterests = json.getString("interests");
-                new DBHandler(this.user,"get_user_feed",null,"getUserFeed",this).execute();
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-        decrementComponentsProcessed();
-    }
-
     public void toast(String text){
         Toast toast = Toast.makeText(this, text, Toast.LENGTH_SHORT);
         toast.show();
     }
 
-    synchronized void buildGoogleApiClient() {
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
-    }
-    @Override
-    protected void onStart() {
-        super.onStart();
-        mGoogleApiClient.connect();
-        Log.e("Connected?", String.valueOf(mGoogleApiClient.isConnected()));
-        //new Thread(new GetContent()).start();
-    }
-
-    @Override
-    public void onConnected(Bundle bundle) {
-        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        MapFragment mapFragment = (MapFragment) getFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
+    public void applyBlur()
+    {
+        runOnUiThread(new  Runnable() {
+            public  void  run() {
+                layout.setDrawingCacheEnabled(true);
+                layout.buildDrawingCache();
+                blurImage = BlurImage(layout.getDrawingCache());
+                layout.setDrawingCacheEnabled(false);
+                blur.setImageBitmap(blurImage);
+                blurApplied = true;
+            }
+        });
     }
 
-    @Override
-    public void onConnectionSuspended(int i) {
+    public void startSpinner()
+    {
+        componentsProcessed++;
+        if(!spinnerStarted) {
+            spinnerStarted = true;
 
+            applyBlur();
+
+            feed.setVisibility(View.INVISIBLE);
+            //blur.setClickable(true);
+            blur.setVisibility(View.VISIBLE);
+
+            loadingLayout.setVisibility(View.VISIBLE);
+            loadingIcon.setVisibility(View.VISIBLE);
+            loadingViewAnim.start();
+        }
     }
 
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-
+    void checkSpinner()
+    {
+        if(componentsProcessed==0) {
+            stopSpinner();
+            feed.setVisibility(View.VISIBLE);
+        }
     }
+
+    void stopSpinner()
+    {
+        runOnUiThread(new Runnable() {
+            public void run() {
+                blur.setVisibility(View.GONE);
+                //blur.setClickable(false);
+                blur.setImageDrawable(null);
+                if (blurImage != null && !blurImage.isRecycled()) {
+                    blurImage.recycle();
+                    blurImage = null;
+                }
+                System.gc();
+                spinnerStarted = false;
+                loadingLayout.setVisibility(View.GONE);
+                loadingIcon.setVisibility(View.GONE);
+                loadingViewAnim.stop();
+            }
+        });
+    }
+
+    void decrementComponentsProcessed()
+    {
+        componentsProcessed--;
+        checkSpinner();
+    }
+
+    Bitmap BlurImage(Bitmap input)
+    {
+        try
+        {
+            RenderScript rsScript = RenderScript.create(getApplicationContext());
+            Allocation alloc = Allocation.createFromBitmap(rsScript, input);
+
+            ScriptIntrinsicBlur blur = ScriptIntrinsicBlur.create(rsScript,   Element.U8_4(rsScript));
+            blur.setRadius(21);
+            blur.setInput(alloc);
+
+            Bitmap result = Bitmap.createBitmap(input.getWidth(), input.getHeight(), Bitmap.Config.ARGB_8888);
+            Allocation outAlloc = Allocation.createFromBitmap(rsScript, result);
+
+            blur.forEach(outAlloc);
+            outAlloc.copyTo(result);
+
+            rsScript.destroy();
+            return result;
+        }
+        catch (Exception e) {
+            // TODO: handle exception
+            return input;
+        }
+    }
+
+    private class Starter implements Runnable {
+        public void run() {
+            new DBHandler(user,"get_user_settings",null,"getUserSettings",getFeedClass()).execute();
+        }
+    }
+
+    public void setSpinner()
+    {
+        spinnerStarted = true;
+    }
+
+    public String getUserInterests()
+    {
+        return userInterests;
+    }
+
+    public String getUser()
+    {
+        return user;
+    }
+
+    public int getUserRadius()
+    {
+        return userRadius;
+    }
+
+    public LatLng getLatLng()
+    {
+        return new LatLng(mLastLocation.getLatitude(),mLastLocation.getLongitude());
+    }
+
+    public FeedActivity getFeedClass()
+    {
+        return FeedActivity.this;
+    }
+
+    public void setBlurBool()
+    {
+        blurApplied = false;
+    }
+
 
     public class FeedArrayAdapter extends ArrayAdapter<ArrayList> {
 
@@ -665,114 +903,6 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
             });
 
             return convertView;
-        }
-    }
-
-    public FeedActivity getFeedClass()
-    {
-        return FeedActivity.this;
-    }
-
-    public void setBlurBool()
-    {
-        blurApplied = false;
-    }
-
-    public void applyBlur()
-    {
-        runOnUiThread(new  Runnable() {
-            public  void  run() {
-                layout.setDrawingCacheEnabled(true);
-                layout.buildDrawingCache();
-                blurImage = BlurImage(layout.getDrawingCache());
-                layout.setDrawingCacheEnabled(false);
-                blur.setImageBitmap(blurImage);
-                blurApplied = true;
-            }
-        });
-    }
-
-    public void startSpinner()
-    {
-        componentsProcessed++;
-        if(!spinnerStarted) {
-            spinnerStarted = true;
-
-            applyBlur();
-
-            feed.setVisibility(View.INVISIBLE);
-            //blur.setClickable(true);
-            blur.setVisibility(View.VISIBLE);
-
-            loadingLayout.setVisibility(View.VISIBLE);
-            loadingIcon.setVisibility(View.VISIBLE);
-            loadingViewAnim.start();
-        }
-    }
-
-    void checkSpinner()
-    {
-        if(componentsProcessed==0) {
-            stopSpinner();
-            feed.setVisibility(View.VISIBLE);
-        }
-    }
-
-    void stopSpinner()
-    {
-        runOnUiThread(new Runnable() {
-            public void run() {
-                blur.setVisibility(View.GONE);
-                //blur.setClickable(false);
-                blur.setImageDrawable(null);
-                if (blurImage != null && !blurImage.isRecycled()) {
-                    blurImage.recycle();
-                    blurImage = null;
-                }
-                System.gc();
-                spinnerStarted = false;
-                loadingLayout.setVisibility(View.GONE);
-                loadingIcon.setVisibility(View.GONE);
-                loadingViewAnim.stop();
-            }
-        });
-    }
-
-    void decrementComponentsProcessed()
-    {
-        componentsProcessed--;
-        checkSpinner();
-    }
-
-    Bitmap BlurImage(Bitmap input)
-    {
-        try
-        {
-            RenderScript rsScript = RenderScript.create(getApplicationContext());
-            Allocation alloc = Allocation.createFromBitmap(rsScript, input);
-
-            ScriptIntrinsicBlur blur = ScriptIntrinsicBlur.create(rsScript,   Element.U8_4(rsScript));
-            blur.setRadius(21);
-            blur.setInput(alloc);
-
-            Bitmap result = Bitmap.createBitmap(input.getWidth(), input.getHeight(), Bitmap.Config.ARGB_8888);
-            Allocation outAlloc = Allocation.createFromBitmap(rsScript, result);
-
-            blur.forEach(outAlloc);
-            outAlloc.copyTo(result);
-
-            rsScript.destroy();
-            return result;
-        }
-        catch (Exception e) {
-            // TODO: handle exception
-            return input;
-        }
-    }
-
-    private class Starter implements Runnable {
-        public void run() {
-            new DBHandler(user,"get_user_settings",null,"getUserSettings",getFeedClass()).execute();
         }
     }
 }

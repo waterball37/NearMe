@@ -2,19 +2,13 @@ package com.roni.haim.nearme;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.app.TaskStackBuilder;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Typeface;
 
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
-import android.support.v4.app.NotificationCompat;
 import android.view.View;
 import android.widget.AutoCompleteTextView;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -25,14 +19,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.content.DialogInterface;
-import android.widget.Toast;
 
 import com.dd.processbutton.iml.ActionProcessButton;
 
 /**
  * A login screen that offers login via email/password.
  */
-    public class LoginActivity extends Activity implements ProgressGenerator.OnCompleteListener {
+    public class LoginActivity extends Activity {
 
     private LinearLayout login_layout;
     private String user;
@@ -53,18 +46,16 @@ import com.dd.processbutton.iml.ActionProcessButton;
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
         mPasswordView = (EditText) findViewById(R.id.password);
         TextView mLogoLabel = (TextView) findViewById(R.id.logoLabel);
-        //Button mSignIn = (Button) findViewById(R.id.email_sign_in_button);
-        TextView mSignUp = (TextView) findViewById(R.id.signUp);
         emailIcon = (ImageView) findViewById(R.id.emailIcon);
         passIcon = (ImageView) findViewById(R.id.passIcon);
+        TextView mSignUp = (TextView) findViewById(R.id.signUp);
+
         Typeface mTypeface = Typeface.createFromAsset(getAssets(), "lobster.otf");
-        mSignUp.setTypeface(mTypeface);
-        //mSignIn.setTypeface(mTypeface);
         mLogoLabel.setTypeface(mTypeface);
         mPasswordView.setTypeface(mTypeface);
         mEmailView.setTypeface(mTypeface);
+        mSignUp.setTypeface(mTypeface);
 
-        final ProgressGenerator progressGenerator = new ProgressGenerator(this);
         mSignIn = (ActionProcessButton) findViewById(R.id.email_sign_in_button);
         mSignIn.setTypeface(mTypeface);
         //mSignIn.setMode(ActionProcessButton.Mode.PROGRESS);
@@ -209,11 +200,6 @@ import com.dd.processbutton.iml.ActionProcessButton;
         Intent intent = new Intent(this, SignUpActivity.class);
         startActivity(intent);
         //finish();
-    }
-
-    @Override
-    public void onComplete() {
-        Toast.makeText(this, "Completed", Toast.LENGTH_LONG).show();
     }
 }
 

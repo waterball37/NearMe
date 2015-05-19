@@ -20,6 +20,9 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
+
+import com.dd.processbutton.iml.ActionProcessButton;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -41,7 +44,7 @@ public class SignUpActivity extends Activity {
     private TextView settings_label;
     //private TextView login;
     private TextView radius;
-
+    private ActionProcessButton buttonCreateAccount;
     private SeekBar radiusSeekBar;
     private String interests_selected;
     private LinearLayout sign_up_layout;
@@ -59,7 +62,6 @@ public class SignUpActivity extends Activity {
         userPass = (EditText)findViewById(R.id.editTextPassword);
         userPassConfirm = (EditText)findViewById(R.id.editTextConfirmPassword);
         userDetails = (TextView) findViewById(R.id.editDetails);
-        b = (Button)findViewById(R.id.buttonCreateAccount);
         interestsLabel = (TextView) findViewById(R.id.interestsLabel);
         radiusLabel = (TextView) findViewById(R.id.radiusLabel);
         settings_label = (TextView) findViewById(R.id.settings_label);
@@ -67,6 +69,7 @@ public class SignUpActivity extends Activity {
         radius = (TextView) findViewById(R.id.radius);
         interests = (Spinner)findViewById(R.id.interests);
         sign_up_layout = (LinearLayout)findViewById(R.id.sign_up_layout);
+        buttonCreateAccount = (ActionProcessButton) findViewById(R.id.buttonCreateAccount);
 
         Typeface mTypeface = Typeface.createFromAsset(getAssets(), "lobster.otf");
         userFullName.setTypeface(mTypeface);
@@ -78,8 +81,63 @@ public class SignUpActivity extends Activity {
         radiusLabel.setTypeface(mTypeface);
         settings_label.setTypeface(mTypeface);
         radius.setTypeface(mTypeface);
-        b.setTypeface(mTypeface);
-        //login.setTypeface(mTypeface);
+        buttonCreateAccount.setTypeface(mTypeface);
+
+        //mSignIn.setMode(ActionProcessButton.Mode.PROGRESS);
+        buttonCreateAccount.setMode(ActionProcessButton.Mode.ENDLESS);
+        // set progress > 0 to start progress indicator animation
+        buttonCreateAccount.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                buttonCreateAccount.setProgress(1);
+                buttonCreateAccount.setEnabled(false);
+                sign_up_layout.setEnabled(false);
+
+                ans = true;
+                userID.setError(null);
+                userPass.setError(null);
+                userPassConfirm.setError(null);
+                userFullName.setError(null);
+                String userName = userFullName.getText().toString();
+                String user = userID.getText().toString();
+                String pass = userPass.getText().toString();
+                String passConfirm = userPassConfirm.getText().toString();
+                if(userName.equals(""))
+                {
+                    userFullName.setError("You haven't enter a name");
+                    ans = false;
+                }
+                if (!pass.equals(passConfirm))
+                {
+                    userPassConfirm.setError("the passwords are not equals");
+                    ans = false;
+                }
+                check(user, pass);
+                interests_selected = ((MyCustomAdapter)interests.getAdapter()).getSelectedInterests();
+                if(interests_selected.equals(""))
+                {
+                    ans =  false;
+                    AlertDialog.Builder builder = new AlertDialog.Builder(getSignUpClass());
+                    builder.setTitle("Please select at least one interest");
+                    builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            return;
+                        }
+                    });
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                }
+                if(ans)
+                    new DBHandler(user, "get_user", null, "getUser", getSignUpClass()).execute();
+                else
+                {
+                    buttonCreateAccount.setProgress(0);
+                    buttonCreateAccount.setEnabled(true);
+                    sign_up_layout.setEnabled(true);
+                }
+            }
+        });
 
         radiusSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             int progress = 0;
@@ -118,51 +176,16 @@ public class SignUpActivity extends Activity {
        */
     }
 
+    public SignUpActivity getSignUpClass()
+    {
+        return SignUpActivity.this;
+    }
+
     @Override
     protected void onDestroy() {
         sign_up_layout.setBackgroundResource(0);
         System.gc();
         super.onDestroy();
-    }
-
-    public void registration(View view)
-    {
-        ans = true;
-        userID.setError(null);
-        userPass.setError(null);
-        userPassConfirm.setError(null);
-        userFullName.setError(null);
-        String userName = userFullName.getText().toString();
-        String user = userID.getText().toString();
-        String pass = userPass.getText().toString();
-        String passConfirm = userPassConfirm.getText().toString();
-        if(userName.equals(""))
-        {
-            userFullName.setError("You haven't enter a name");
-            ans = false;
-        }
-        if (!pass.equals(passConfirm))
-        {
-            userPassConfirm.setError("the passwords are not equals");
-            ans = false;
-        }
-        check(user, pass);
-        interests_selected = ((MyCustomAdapter)interests.getAdapter()).getSelectedInterests();
-        if(interests_selected.equals(""))
-        {
-            ans =  false;
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("Please select at least one interest");
-            builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                    return;
-                }
-            });
-            AlertDialog dialog = builder.create();
-            dialog.show();
-        }
-        if(ans)
-            new DBHandler(user, "get_user", null, "getUser", this).execute();
     }
 
     public void getUser(JSONArray jsonArray) {
@@ -175,6 +198,9 @@ public class SignUpActivity extends Activity {
                 new DBHandler(userID.getText().toString(),"set_user",params,"setUser",this).execute();
         }
         else {
+            buttonCreateAccount.setProgress(0);
+            buttonCreateAccount.setEnabled(true);
+            sign_up_layout.setEnabled(true);
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("USER EXISTS");
             builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
@@ -186,6 +212,7 @@ public class SignUpActivity extends Activity {
             dialog.show();
         }
     }
+
     public void setUser(JSONArray jsonArray) {
         for(int i=0; i<jsonArray.length();i++) {
             JSONObject json = null;
@@ -201,6 +228,9 @@ public class SignUpActivity extends Activity {
                 }
                 else
                 {
+                    buttonCreateAccount.setProgress(0);
+                    buttonCreateAccount.setEnabled(true);
+                    sign_up_layout.setEnabled(true);
                     AlertDialog.Builder builder = new AlertDialog.Builder(this);
                     builder.setTitle("COULDN'T CREATE AN ACCOUNT");
                     builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
@@ -225,6 +255,7 @@ public class SignUpActivity extends Activity {
                 json = jsonArray.getJSONObject(i);
                 String result = json.getString("result");
                 if (result.equals("success")) {
+                    buttonCreateAccount.setProgress(100);
                     finish();
                     System.gc();
                     Intent intent = new Intent(this, FeedActivity.class);
@@ -233,6 +264,9 @@ public class SignUpActivity extends Activity {
                 }
                 else
                 {
+                    buttonCreateAccount.setProgress(0);
+                    buttonCreateAccount.setEnabled(true);
+                    sign_up_layout.setEnabled(true);
                     AlertDialog.Builder builder = new AlertDialog.Builder(this);
                     builder.setTitle("COULDN'T SET SETTINGS");
                     builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {

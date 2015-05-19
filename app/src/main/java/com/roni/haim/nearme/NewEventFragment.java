@@ -50,18 +50,11 @@ public class NewEventFragment extends Fragment {
     private Spinner interests;
     private ImageView image;
     private ImageButton deleteImage;
+    private TextView newEventLabel;
     private View frag;
-    private ImageView imageView;
-    private ImageView imageView2;
-    private ImageView imageView3;
-    private ImageView imageView4;
-    private ImageView imageView5;
-    private ImageView imageView6;
-    private ImageView imageView7;
-    private ImageView imageView8;
-    private ImageView imageView9;
     private ImageButton addImageCamera;
     private ImageButton addImageGallery;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -75,15 +68,6 @@ public class NewEventFragment extends Fragment {
         addImageGallery.setBackgroundResource(0);
         deleteImage.setBackgroundResource(0);
         image.setBackgroundResource(0);
-        imageView.setBackgroundResource(0);
-        imageView2.setBackgroundResource(0);
-        imageView3.setBackgroundResource(0);
-        imageView4.setBackgroundResource(0);
-        imageView5.setBackgroundResource(0);
-        imageView6.setBackgroundResource(0);
-        imageView7.setBackgroundResource(0);
-        imageView8.setBackgroundResource(0);
-        imageView9.setBackgroundResource(0);
         frag = null;
         System.gc();
         super.onDestroy();
@@ -94,29 +78,19 @@ public class NewEventFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         Typeface myTypeface = Typeface.createFromAsset(getActivity().getAssets(), "lobster.otf");
-        frag = (View)inflater.inflate(R.layout.fragment_new_event, container, false);
+        frag = inflater.inflate(R.layout.fragment_new_event, container, false);
         new_event_layout = (FrameLayout) frag.findViewById(R.id.new_event_layout);
         add = (EditText)frag.findViewById(R.id.address);
-        TextView addLabel = (TextView)frag.findViewById(R.id.address_label);
         TextView interest = (TextView)frag.findViewById(R.id.interest);
         interests = (Spinner)frag.findViewById(R.id.interests);
-        TextView nameLabel = (TextView)frag.findViewById(R.id.name_label);
         TextView imageLabel = (TextView)frag.findViewById(R.id.images);
         name = (EditText)frag.findViewById(R.id.name);
-        Button post = (Button)frag.findViewById(R.id.post);
+        newEventLabel = (TextView)frag.findViewById(R.id.newEventLabel);
+        image = (ImageView)frag.findViewById(R.id.image);
         addImageCamera = (ImageButton)frag.findViewById(R.id.add_image_camera);
         addImageGallery = (ImageButton)frag.findViewById(R.id.add_image_gallery);
         deleteImage = (ImageButton)frag.findViewById(R.id.image_delete);
-        image = (ImageView)frag.findViewById(R.id.image);
-        imageView = (ImageView)frag.findViewById(R.id.imageView);
-        imageView2 = (ImageView)frag.findViewById(R.id.imageView2);
-        imageView3 = (ImageView)frag.findViewById(R.id.imageView3);
-        imageView4 = (ImageView)frag.findViewById(R.id.imageView4);
-        imageView5 = (ImageView)frag.findViewById(R.id.imageView5);
-        imageView6 = (ImageView)frag.findViewById(R.id.imageView6);
-        imageView7 = (ImageView)frag.findViewById(R.id.imageView7);
-        imageView8 = (ImageView)frag.findViewById(R.id.imageView8);
-        imageView9 = (ImageView)frag.findViewById(R.id.imageView9);
+        Button post = (Button)frag.findViewById(R.id.post);
 
         LatLng loc = ((FeedActivity) getActivity()).getLatLng();
         String address="";
@@ -127,7 +101,15 @@ public class NewEventFragment extends Fragment {
                     loc.latitude,
                     loc.longitude, 1);
         } catch (IOException e) {
-            ((FeedActivity) getActivity()).toast("Can't determine address");
+            try {
+                addresses = geoCoder.getFromLocation(
+                        loc.latitude,
+                        loc.longitude, 1);
+            } catch (IOException e1) {
+                e1.printStackTrace();
+                getActivity().getFragmentManager().popBackStack();
+                ((FeedActivity) getActivity()).toast("Can't determine address");
+            }
             e.printStackTrace();
         }
 
@@ -139,18 +121,17 @@ public class NewEventFragment extends Fragment {
         else
             ((FeedActivity) getActivity()).toast("Can't determine address");
 
-        //new DBHandler("dummyUser","get_interests",null,"setInterests",((FeedActivity)this.getActivity()).getFeedClass()).execute();
         String[] items = new String[]{"Alcohol", "Animals", "Art", "Business", "Cinema", "Food", "Music", "Night Life", "Sport", "Theater"};
         ArrayList<String> values = new ArrayList<>(Arrays.asList(items));
         MyCustomAdapter adapter = new MyCustomAdapter(getActivity().getBaseContext(), values);
         interests.setAdapter(adapter);
 
-        addLabel.setTypeface(myTypeface);
         add.setText(address);
         add.setTypeface(myTypeface);
         interest.setTypeface(myTypeface);
-        nameLabel.setTypeface(myTypeface);
+        post.setTypeface(myTypeface);
         name.setTypeface(myTypeface);
+        newEventLabel.setTypeface(myTypeface);
         imageLabel.setTypeface(myTypeface);
 
         name.setOnClickListener(new View.OnClickListener() {
@@ -164,7 +145,7 @@ public class NewEventFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 LatLng loc = ((FeedActivity) getActivity()).getLatLng();
-                Hashtable<String,String> params = new Hashtable<String,String>();
+                Hashtable<String,String> params = new Hashtable<>();
                 params.put("name",name.getText().toString());
                 params.put("interests",interests.getSelectedItem().toString());
                 params.put("address", add.getText().toString());
@@ -363,49 +344,13 @@ public class NewEventFragment extends Fragment {
         public View getCustom(int position, View convertView, ViewGroup parent) {
 
             View row = LayoutInflater.from(context).inflate(
-                    R.layout.interests_item, parent, false);
+                    R.layout.interests_item_signup, parent, false);
 
             TextView interestName = (TextView) row.findViewById(R.id.interestName);
-            TextView interestColor = (TextView) row.findViewById(R.id.interestColor);
             Typeface tf = Typeface.createFromAsset(context.getAssets(), "lobster.otf");
             interestName.setTypeface(tf);
+
             interestName.setText(list.get(position));
-            String color = "";
-            switch (list.get(position)) {
-                case "Music":
-                    color = "#DF79C37D";
-                    break;
-                case "Sport":
-                    color = "#DF61C7F2";
-                    break;
-                case "Alcohol":
-                    color = "#DFBF5CA3";
-                    break;
-                case "Animals":
-                    color = "#DFEF575C";
-                    break;
-                case "Art":
-                    color = "#DFFAB15B";
-                    break;
-                case "Business":
-                    color = "#DFFCF06B";
-                    break;
-                case "Cinema":
-                    color = "#DFC12026";
-                    break;
-                case "Food":
-                    color = "#DF00589C";
-                    break;
-                case "Night Life":
-                    color = "#DF623894";
-                    break;
-                case "Theater":
-                    color = "#DFE68B24";
-                    break;
-                default:
-                    break;
-            }
-            interestColor.setBackgroundColor(Color.parseColor(color));
 
             return row;
         }

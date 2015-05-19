@@ -4,22 +4,9 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import android.os.Environment;
-import android.util.Log;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
 
 /**
  * Created by roni on 23/04/2015.
@@ -39,7 +26,7 @@ public class HttpFileUpload {
 
     int bytesRead, bytesAvailable, bufferSize;
     byte[] buffer;
-    int maxBufferSize = 1 * 1024 * 1024;
+    int maxBufferSize = 1024 * 1024;
 
     public void uploadFile(String fileName) {
         try {

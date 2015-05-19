@@ -170,17 +170,6 @@
             >
         </TextView>
 
-        <!--
-        <com.roni.haim.nearme.MultiSelectionSpinner
-            android:id="@+id/interests"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignTop="@+id/interestsLabel"
-            android:layout_toEndOf="@+id/interestsLabel">
-
-        </com.roni.haim.nearme.MultiSelectionSpinner>com.example.multiselectionspinner.MultiSelectionSpinner
-        -->
-
         <Spinner
             android:id="@+id/interests"
             android:layout_width="wrap_content"

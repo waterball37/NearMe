@@ -7,7 +7,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
@@ -15,11 +14,9 @@ import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
@@ -41,13 +38,13 @@ class DBHandler extends AsyncTask<Integer,Long,JSONArray>
         this.action = action;
         this.params = params;
         this.callback = callback;
-        this.senderClass = new WeakReference<Object>(senderClass);
+        this.senderClass = new WeakReference<>(senderClass);
     }
 
-    JSONArray Launch(String user, String action, Hashtable<String, String> params)
+    private JSONArray Launch(String user, String action, Hashtable<String, String> params)
     {
         String url = "http://nearme.host22.com/dbConnector.php";
-        List<NameValuePair> nameValuePair = new ArrayList<NameValuePair>();
+        List<NameValuePair> nameValuePair = new ArrayList<>();
         nameValuePair.add(new BasicNameValuePair("action", action));
         nameValuePair.add(new BasicNameValuePair("user", user));
         if(params!=null) {

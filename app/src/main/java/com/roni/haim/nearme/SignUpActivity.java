@@ -158,14 +158,14 @@ public class SignUpActivity extends Activity {
             AlertDialog dialog = builder.create();
             dialog.show();
         }
-        if(ans==true)
+        if(ans)
             new DBHandler(user, "get_user", null, "getUser", this).execute();
     }
 
     public void getUser(JSONArray jsonArray) {
 
         if (jsonArray == null) {
-                Hashtable<String,String> params = new Hashtable<String,String>();
+                Hashtable<String,String> params = new Hashtable<>();
                 params.put("name",userFullName.getText().toString());
                 params.put("ID",userID.getText().toString());
                 params.put("pass",BCrypt.hashpw(userPass.getText().toString(), BCrypt.gensalt()));
@@ -190,7 +190,7 @@ public class SignUpActivity extends Activity {
                 json = jsonArray.getJSONObject(i);
                 String result = json.getString("result");
                 if (result.equals("success")) {
-                    Hashtable<String,String> params = new Hashtable<String,String>();
+                    Hashtable<String,String> params = new Hashtable<>();
                     params.put("ID",userID.getText().toString());
                     params.put("interests",interests_selected);
                     params.put("radius",radius.getText().toString());
@@ -284,7 +284,7 @@ public class SignUpActivity extends Activity {
             boolean wasSelected = false;
             String selected = "";
             for(int i = 0 ; i< boolSelect.size() ; i++) {
-                if (boolSelect.get(i) == true) {
+                if (boolSelect.get(i)) {
                     if(wasSelected)
                         selected += "," + list.get(i);
                     else
@@ -301,7 +301,7 @@ public class SignUpActivity extends Activity {
             super(context, 0, objects);
             this.context = context;
             list = objects;
-            boolSelect = new ArrayList<Boolean>();
+            boolSelect = new ArrayList<>();
             for (int i = 0 ; i < list.size() ; i++)
                 boolSelect.add(false);
         }
@@ -384,7 +384,7 @@ public class SignUpActivity extends Activity {
             }
             interestColor.setBackgroundColor(Color.parseColor(color));
 
-            if(boolSelect.get(position) == true)
+            if(boolSelect.get(position))
             {
                 iView.setBackgroundColor(Color.parseColor(color));
                 interestName.setTextColor(Color.WHITE);
@@ -395,7 +395,7 @@ public class SignUpActivity extends Activity {
             row.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (boolSelect.get(position) == false) {
+                    if (!boolSelect.get(position)) {
                         boolSelect.set(position, true);
                         iView.setBackgroundColor(Color.parseColor(finalColor));
                         interestName.setTextColor(Color.WHITE);

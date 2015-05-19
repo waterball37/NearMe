@@ -8,8 +8,6 @@ import android.widget.ImageView;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.URL;
 
 /**
@@ -23,8 +21,8 @@ class IMGHandler extends AsyncTask<Integer, Void, Bitmap> {
 
     public IMGHandler(ImageView imageView,String url,Object senderClass) {
         // Use a WeakReference to ensure the ImageView can be garbage collected
-        this.imageViewReference = new WeakReference<ImageView>(imageView);
-        this.senderClass = new WeakReference<Object>(senderClass);
+        this.imageViewReference = new WeakReference<>(imageView);
+        this.senderClass = new WeakReference<>(senderClass);
         this.url = url;
     }
 
@@ -104,7 +102,7 @@ class IMGHandler extends AsyncTask<Integer, Void, Bitmap> {
     // Once complete, see if ImageView is still around and set bitmap.
     @Override
     protected void onPostExecute(Bitmap bitmap) {
-        if(imageViewReference != null && bitmap != null)
+        if(bitmap != null)
         {
             final ImageView imageView = imageViewReference.get();
             if (imageView != null) {

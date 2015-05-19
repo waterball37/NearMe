@@ -27,7 +27,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -89,12 +88,12 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
 
     private RelativeLayout layout;
     private ImageView blur;
+    private String userInterests;
 
     //private ImageButton newEvent;
     private Fragment NewFragment;
+    private Fragment SettingsFragment;
     private FragmentTransaction FT;
-
-    private SwipeRefreshLayout mSwipeRefreshLayout;
 
     static class ViewHolder {
         TextView eInterestColor;
@@ -131,8 +130,8 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
         logoLabel.setTypeface(myTypeface);
         feed = (ListView)findViewById(R.id.feed);
         //feed = (MyListView)findViewById(R.id.feed);
-        markers = new HashMap<String,Marker>();
-        events = new ArrayList<ArrayList<String>>();
+        markers = new HashMap<>();
+        events = new ArrayList<>();
 
         loadingLayout = (LinearLayout)findViewById(R.id.spinnerContainer);
         loadingLayout.setVisibility(View.GONE);
@@ -146,7 +145,7 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
         layout = (RelativeLayout)findViewById(R.id.layout);
         blur = (ImageView)findViewById(R.id.blur);
 
-        mSwipeRefreshLayout = (SwipeRefreshLayout)findViewById(R.id.refresh_layout);
+        SwipeRefreshLayout mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.refresh_layout);
 
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -160,10 +159,14 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
         newEvent.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if(SettingsFragment != null && SettingsFragment.isAdded() )
+                {
+                    getFragmentManager().popBackStack();
+                }
                 if (NewFragment == null || !NewFragment.isAdded()) {
                     ((FloatingActionsMenu) findViewById(R.id.multiple_actions_down)).toggle();
 
-                    setBlurBool(false);
+                    setBlurBool();
                     if (!fragmentBlurApplied) {
                         applyBlur();
                         fragmentBlurApplied = true;
@@ -171,11 +174,9 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
                     blur.setClickable(true);
                     blur.setVisibility(View.VISIBLE);
 
-                    FT = getFragmentManager().beginTransaction();
-                    //FT.setCustomAnimations(R.animator.enter_anim, R.animator.exit_anim);
-
                     NewFragment = new NewEventFragment();
 
+                    FT = getFragmentManager().beginTransaction();
                     FT.add(R.id.new_event, NewFragment);
                     FT.addToBackStack("NewFragment");
                     FT.commit();
@@ -194,13 +195,19 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
             }
         });
 
-        /*
-        newEvent.setOnClickListener(new View.OnClickListener() {
+        final FloatingActionButton settings = (FloatingActionButton)findViewById(R.id.settings);
+        settings.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(NewFragment == null || !NewFragment.isAdded()) {
-                    setBlurBool(false);
-                    if(!fragmentBlurApplied) {
+                if(NewFragment != null && NewFragment.isAdded())
+                {
+                    getFragmentManager().popBackStack();
+                }
+                if ( SettingsFragment == null || !SettingsFragment.isAdded() ) {
+                    ((FloatingActionsMenu) findViewById(R.id.multiple_actions_down)).toggle();
+
+                    setBlurBool();
+                    if (!fragmentBlurApplied) {
                         applyBlur();
                         fragmentBlurApplied = true;
                     }
@@ -208,21 +215,18 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
                     blur.setVisibility(View.VISIBLE);
 
                     FT = getFragmentManager().beginTransaction();
-                    //FT.setCustomAnimations(R.animator.enter_anim, R.animator.exit_anim);
+                    SettingsFragment = new SettingsFragment();
 
-                    NewFragment = new NewEventFragment();
-
-                    FT.add(R.id.new_event, NewFragment);
-                    FT.addToBackStack("NewFragment");
+                    FT.add(R.id.new_event, SettingsFragment);
+                    FT.addToBackStack("SettingsFragment");
                     FT.commit();
+
                 }
             }
         });
-        */
 
         buildGoogleApiClient();
     }
-
 
     public void setEvent(JSONArray jsonArray)
     {
@@ -253,6 +257,44 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
             }
         }
 
+    }
+
+    public void setUserSettings(JSONArray jsonArray)
+    {
+        for(int i=0; i<jsonArray.length();i++){
+            JSONObject json = null;
+            try {
+                json = jsonArray.getJSONObject(i);
+                String result = json.getString("result");
+                if( result.equals("success") )
+                {
+                    toast("Settings saved succesfully");
+                    stopSpinner();
+                    finish();
+                    startActivity(getIntent());
+                }
+                else
+                    System.out.println("error");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+    public String getUserInterests()
+    {
+        return userInterests;
+    }
+
+    public String getUser()
+    {
+        return user;
+    }
+
+    public int getUserRadius()
+    {
+        return userRadius;
     }
 
     @Override
@@ -388,7 +430,7 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
                             .title(json.getString("name"))
                             .snippet(json.getString("address"))
                             .icon(BitmapDescriptorFactory.fromResource(assetName))));
-                    events.add(new ArrayList<String>(Arrays.asList(String.valueOf(json.getInt("ID")),json.getString("name"),json.getString("address"),json.getString("interests"),json.getString("date"),"true")));
+                    events.add(new ArrayList<>(Arrays.asList(String.valueOf(json.getInt("ID")), json.getString("name"), json.getString("address"), json.getString("interests"), json.getString("date"), "true")));
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -407,6 +449,7 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
             try {
                 json = jsonArray.getJSONObject(i);
                 userRadius = json.getInt("radius");
+                userInterests = json.getString("interests");
                 new DBHandler(this.user,"get_user_feed",null,"getUserFeed",this).execute();
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -576,9 +619,9 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
         return FeedActivity.this;
     }
 
-    public void setBlurBool(Boolean value)
+    public void setBlurBool()
     {
-        blurApplied = value;
+        blurApplied = false;
     }
 
     public void applyBlur()

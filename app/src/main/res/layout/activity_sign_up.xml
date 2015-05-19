@@ -1,6 +1,8 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
-    android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     android:paddingBottom="@dimen/activity_vertical_margin"
@@ -11,11 +13,11 @@
     <RelativeLayout
         android:id="@+id/detailsLabel"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:background="@drawable/rounded_corners"
         android:layout_marginBottom="15dp"
         android:layout_marginTop="20dp"
-        >
+        android:layout_weight="0.55">
 
         <TextView
             android:id="@+id/editDetails"
@@ -24,7 +26,8 @@
             android:background="#00000000"
             android:textSize="30sp"
             android:textColor="@color/white"
-            android:text="Account Details" />
+            android:text="Account Details"
+            android:layout_centerInParent="true" />
 
     </RelativeLayout>
 
@@ -32,11 +35,11 @@
     <RelativeLayout
         android:id="@+id/details"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:background="@drawable/rounded_corners"
         android:layout_below="@+id/detailsLabel"
         android:layout_marginBottom="15dp"
-        >
+        android:layout_weight="1.5">
 
         <EditText
             android:id="@+id/editTextFullName"
@@ -131,31 +134,32 @@
     <RelativeLayout
         android:id="@+id/settingsLabel"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:background="@drawable/rounded_corners"
         android:layout_marginBottom="15dp"
         android:layout_below="@+id/details"
-        >
+        android:layout_weight="0.55">
 
         <TextView
             android:id="@+id/settings_label"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="#00000000"
             android:textSize="30sp"
             android:textColor="@color/white"
-            android:text="Settings" />
+            android:text="Settings"
+            android:layout_centerInParent="true" />
 
     </RelativeLayout>
 
     <RelativeLayout
         android:id="@+id/settings"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:background="@drawable/rounded_corners"
         android:layout_marginBottom="10dp"
         android:layout_below="@+id/settingsLabel"
-        >
+        android:layout_weight="1">
 
         <TextView
             android:id="@+id/interestsLabel"
@@ -185,7 +189,7 @@
             android:background="#5FFFFFFF"
             android:layout_marginTop="3dp"
             android:layout_marginBottom="3dp"
-            android:layout_below="@+id/interestsLabel"
+            android:layout_below="@+id/interests"
             />
 
         <TextView
@@ -230,7 +234,7 @@
     <Button
         android:id="@+id/buttonCreateAccount"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:text="Create Account"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
@@ -241,8 +245,9 @@
         android:background="@drawable/rounded_corners_button"
         android:textAllCaps="false"
         android:layout_below="@id/settings"
-        />
+        android:layout_weight="0.5" />
 
+    <!--
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -254,5 +259,6 @@
         android:textColor="@color/white"
         android:layout_alignParentRight="true"
         />
+        -->
 
-</RelativeLayout>
+</LinearLayout>

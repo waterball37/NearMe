@@ -15,6 +15,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.Spinner;
@@ -38,12 +39,12 @@ public class SignUpActivity extends Activity {
     private TextView interestsLabel;
     private TextView radiusLabel;
     private TextView settings_label;
-    private TextView login;
+    //private TextView login;
     private TextView radius;
 
     private SeekBar radiusSeekBar;
     private String interests_selected;
-    private RelativeLayout sign_up_layout;
+    private LinearLayout sign_up_layout;
     private Spinner interests;
     private Button b;
     private boolean ans = true;
@@ -65,8 +66,7 @@ public class SignUpActivity extends Activity {
         radiusSeekBar = (SeekBar) findViewById(R.id.radiusSeekBar);
         radius = (TextView) findViewById(R.id.radius);
         interests = (Spinner)findViewById(R.id.interests);
-        login = (TextView) findViewById(R.id.login);
-        sign_up_layout = (RelativeLayout)findViewById(R.id.sign_up_layout);
+        sign_up_layout = (LinearLayout)findViewById(R.id.sign_up_layout);
 
         Typeface mTypeface = Typeface.createFromAsset(getAssets(), "lobster.otf");
         userFullName.setTypeface(mTypeface);
@@ -79,7 +79,7 @@ public class SignUpActivity extends Activity {
         settings_label.setTypeface(mTypeface);
         radius.setTypeface(mTypeface);
         b.setTypeface(mTypeface);
-        login.setTypeface(mTypeface);
+        //login.setTypeface(mTypeface);
 
         radiusSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             int progress = 0;
@@ -106,6 +106,7 @@ public class SignUpActivity extends Activity {
         MyCustomAdapter adapter = new MyCustomAdapter(this, values);
         interests.setAdapter(adapter);
 
+        /*
        login.setOnClickListener(new View.OnClickListener() {
            @Override
            public void onClick(View v) {
@@ -114,6 +115,7 @@ public class SignUpActivity extends Activity {
                finish();
            }
        });
+       */
     }
 
     @Override
@@ -246,6 +248,11 @@ public class SignUpActivity extends Activity {
                 e.printStackTrace();
             }
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
     }
 
     public void check(String id,String pass)

@@ -252,6 +252,8 @@ public class NewEventFragment extends Fragment {
                     desImage = Bitmap.createBitmap(rawImage, 0, 0, rawImage.getWidth(),
                             rawImage.getHeight(), matrix, true);
                 }
+                else
+                    desImage = Bitmap.createScaledBitmap(rawImage, 80, 80, false);
                 //Bitmap desImage = Bitmap.createScaledBitmap(rawImage, 80, 80, false);
                 image.setImageBitmap(desImage);
                 deleteImage.setVisibility(View.VISIBLE);
@@ -297,11 +299,6 @@ public class NewEventFragment extends Fragment {
                 cursor.close();
                 image.setImageBitmap(imageBitmap);
                 deleteImage.setVisibility(View.VISIBLE);
-            }
-            else
-            {
-                Toast.makeText(getActivity(), "You haven't picked Image",
-                        Toast.LENGTH_LONG).show();
             }
         } catch (Exception e) {
             Toast.makeText(getActivity(), "Something went wrong", Toast.LENGTH_LONG)

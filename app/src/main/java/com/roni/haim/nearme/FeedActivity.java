@@ -668,7 +668,7 @@ public class FeedActivity extends Activity implements OnMapReadyCallback,GoogleA
         }
     }
 
-    FeedActivity getFeedClass()
+    public FeedActivity getFeedClass()
     {
         return FeedActivity.this;
     }
